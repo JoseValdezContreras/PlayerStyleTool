@@ -194,7 +194,11 @@ if df is not None:
         st.metric("Players After Filtering", players_after, delta=f"-{players_before - players_after}")
     
     # Feature Selection
-    st.header("🎯 Feature Selection")
+    st.header("🎯 Feature Selection
+    st.markdown("""
+    **Just some good Housekeeping:**
+    Here is the correlation matrix for the features selected, this is just so you can see all features selected. There is a high correlation between some features but I decide to keep them since I believe they are important to discern how players actuaelly take shots and score goals.
+    """)
     
     cluster_features = df_player.drop(columns=['total_shots','xG_sum','Goal_sum','total_team_shots_all_matches'])
     
@@ -236,6 +240,15 @@ if df is not None:
     
     # Elbow Method
     st.markdown("#### Determining Optimal Number of Clusters")
+    st.markdown("""
+    **Some more good Housekeeping:**
+    K is the number of groups you ask the computer to divide the players in. 
+    In this app you can change the number of clusters to see how groups change.
+    The analysis you'll see is for K=5 meaning I chose to divide the players in 5 groups
+    Below is a graph showing the in-cluster inertia for K= 2-12, the way to interpret it is by seeing how much Inertia or differences inside the group are reduced. 
+    What you want is to get the minimum number of groups where the differences within each group stops changing. This graph doesn't have a super defined elbow but it wouldn't be super controversial to pick K=4, 5 or 6 
+
+    """)
     
     with st.spinner("Running elbow method..."):
         inertia_values = []
@@ -260,6 +273,7 @@ if df is not None:
     **Selected K = 5**
     
     Reasoning from analysis:
+    - K=4 There is still a lot to gain in terms of reducing inertia by going to K=5 and I want to have more cool graphs.
     - K=5 Messi and Ronaldo are in different clusters
     - K=6 Average radar charts are too similar between certain groups. Makes them look like the same style of player just a little bit worse.
     - K=5 Definite Distinction between player styles.
@@ -280,6 +294,13 @@ if df is not None:
     
     # Cluster Visualization
     st.header("📈 Cluster Visualizations")
+    st.markdown("""
+    **How to Read this Chart:**
+    Each dot is a player.
+    Each color is the group the player belongs in according to the Machine Learning Algorithm
+    X axis is a mix of the contributors of Prinipal Component 1. The higher these attributes the more they go to the right
+    Y axis is a mix of the contributos of Principal Component 2. The higher these attributess the more they go up
+    """)
     
     # PCA Visualization
     st.markdown("#### Principal Component Analysis (PCA)")
@@ -339,6 +360,13 @@ if df is not None:
     
     # t-SNE Visualization
     st.markdown("#### t-SNE Visualization")
+    st.markdown("""
+    **The meat and potatoes, How to Read this Chart:**
+    As in the Principal component chart, each dot is a player and every color is the group they belong in.
+    The X axis and Y axis dont really have a mathematical purpose beyond dividing the groups in a way us Humans can understand it.
+    
+    
+    """)
     
     with st.spinner("Creating t-SNE visualization..."):
         tsne = TSNE(n_components=2, random_state=42, perplexity=30)
@@ -356,15 +384,19 @@ if df is not None:
     
     st.markdown("""
     **t-SNE Insight:**
-    - Shows natural groupings based on style similarity
-    - Clear separation between clusters
-    - Helps validate cluster quality
+    - In my opinion this shows clear separation in clusters.
+    - The easiest to see are the yellow clusters 4 and the blue cluster 1.
+    - Blue cluster 1 consists of mainly defensive players, since the are not actually attackers, they are very different to all other players in this chart whose job is to score goals. It makes total sense that its almost tucked away at the bottom right
+    - Cluster 4 consists of playmaking and attacking midfielders like Lionel Messi, Kevin de Vruine and Christian Eriksen, while these players are great attackers in their own right, part of their responsibility is gathering the ball in central areas and distributing, what differntiates these attackers is that they'll take long range chances when presented with good opportunities. These players are also the ones that are usually tasked with taking corner kicks or being outside of the box during them which is why they don't take many headers. It makes sense that there is a blank space between the yellow group and the green and purple ones.
     """)
      # ============================================================================
     # NEW: CLUSTER AVERAGE RADAR CHARTS
     # ============================================================================
     st.markdown("#### Cluster Average Style Profiles")
-    st.markdown("Radar charts showing the average style profile for each cluster:")
+    st.markdown("Radar charts showing the average style profile for each cluster:
+    How to read:
+    8 attributes are put in this circular chart, the more they stick out the more players stick out due to these attribues
+    Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters")
     
     # Define features for radar charts
     radar_features = [
@@ -491,6 +523,9 @@ if df is not None:
     
     # Show top players in each cluster
     st.markdown("#### Top Players in Each Cluster")
+    st.markdown("Radar charts showing the average style profile for each cluster:
+    How to read:
+    This is just a sorted list by number of shots for the players in each cluster. If you read the list and say: It makes sense that these players are together I did a good job")
     
     for cluster_num in sorted(df_player['cluster'].unique()):
         with st.expander(f"Cluster {cluster_num} - {len(df_player[df_player['cluster'] == cluster_num])} players"):
@@ -503,6 +538,13 @@ if df is not None:
     
     # Radar Charts
     st.header("📊 Player Style Profiles")
+    st.markdown("Stacked Radar Chart comparing player styles:
+    How to read:
+    Same as the radar chart just one on top of the other to visualize diferences. 
+    You can click on any players on the list to see how they compare
+    The default is Messi vs CR7
+    The main difference between the two? Cristiano on average shoots closer to the goal, takes headers while Messi rarely does. Messi is more Clinical meaning and is also given more set pieces to take. 
+    What makes them similar? They are the Talisman of their teams, they have the highest share of shots taken for their team")
     
     radar_features = [
         'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
