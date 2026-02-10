@@ -194,7 +194,7 @@ if df is not None:
         st.metric("Players After Filtering", players_after, delta=f"-{players_before - players_after}")
     
     # Feature Selection
-    st.header("🎯 Feature Selection
+    st.header("🎯 Feature Selection")
     st.markdown("""
     **Just some good Housekeeping:**
     Here is the correlation matrix for the features selected, this is just so you can see all features selected. There is a high correlation between some features but I decide to keep them since I believe they are important to discern how players actuaelly take shots and score goals.
