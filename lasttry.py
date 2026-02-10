@@ -393,7 +393,7 @@ if df is not None:
     # NEW: CLUSTER AVERAGE RADAR CHARTS
     # ============================================================================
     st.markdown("#### Cluster Average Style Profiles")
-        st.markdown("""
+    st.markdown("""
     **t-SNE Insight:**
     - In my opinion this shows clear separation in clusters.
     - The easiest to see are the yellow clusters 4 and the blue cluster 1.
