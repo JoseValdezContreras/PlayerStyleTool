@@ -393,10 +393,10 @@ if df is not None:
     # NEW: CLUSTER AVERAGE RADAR CHARTS
     # ============================================================================
     st.markdown("#### Cluster Average Style Profiles")
-    st.markdown("Radar charts showing the average style profile for each cluster:
+    st.markdown("""Radar charts showing the average style profile for each cluster:
     How to read:
     8 attributes are put in this circular chart, the more they stick out the more players stick out due to these attribues
-    Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters")
+    Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters""")
     
     # Define features for radar charts
     radar_features = [
