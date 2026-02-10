@@ -530,9 +530,9 @@ if df is not None:
     
     # Show top players in each cluster
     st.markdown("#### Top Players in Each Cluster")
-    st.markdown("Radar charts showing the average style profile for each cluster:
-    How to read:
-    This is just a sorted list by number of shots for the players in each cluster. If you read the list and say: It makes sense that these players are together I did a good job")
+    st.markdown(""Radar charts showing the average style profile for each cluster:
+        How to read:
+        This is just a sorted list by number of shots for the players in each cluster. If you read the list and say: It makes sense that these players are together I did a good job"")
     
     for cluster_num in sorted(df_player['cluster'].unique()):
         with st.expander(f"Cluster {cluster_num} - {len(df_player[df_player['cluster'] == cluster_num])} players"):
