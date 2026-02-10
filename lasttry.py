@@ -394,16 +394,11 @@ if df is not None:
     # ============================================================================
     st.markdown("#### Cluster Average Style Profiles")
     st.markdown("""
-    **t-SNE Insight:**
-    - In my opinion this shows clear separation in clusters.
-    - The easiest to see are the yellow clusters 4 and the blue cluster 1.
-    - Blue cluster 1 consists of mainly defensive players, since the are not actually attackers, they are very different to all other players in this chart whose job is to score goals. It makes total sense that its almost tucked away at the bottom right
-    - Cluster 4 consists of playmaking and attacking midfielders like Lionel Messi, Kevin de Vruine and Christian Eriksen, while these players are great attackers in their own right, part of their responsibility is gathering the ball in central areas and distributing, what differntiates these attackers is that they'll take long range chances when presented with good opportunities. These players are also the ones that are usually tasked with taking corner kicks or being outside of the box during them which is why they don't take many headers. It makes sense that there is a blank space between the yellow group and the green and purple ones.
-    """)
-    st.markdown(""Radar charts showing the average style profile for each cluster:
+    Radar charts showing the average style profile for each cluster:
     How to read:
     8 attributes are put in this circular chart, the more they stick out the more players stick out due to these attributes
-    Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters"")
+    Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters""")
+
     
     # Define features for radar charts
     radar_features = [
