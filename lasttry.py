@@ -545,13 +545,13 @@ if df is not None:
     
     # Radar Charts
     st.header("📊 Player Style Profiles")
-    st.markdown("Stacked Radar Chart comparing player styles:
+    st.markdown(""Stacked Radar Chart comparing player styles:
         How to read:
         Same as the radar chart just one on top of the other to visualize diferences. 
         You can click on any players on the list to see how they compare
         The default is Messi vs CR7
         The main difference between the two? Cristiano on average shoots closer to the goal, takes headers while Messi rarely does. Messi is more Clinical meaning and is also given more set pieces to take. 
-        What makes them similar? They are the Talisman of their teams, they have the highest share of shots taken for their team")
+        What makes them similar? They are the Talisman of their teams, they have the highest share of shots taken for their team"")
     
     radar_features = [
         'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
