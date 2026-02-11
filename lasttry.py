@@ -125,7 +125,11 @@ if df is not None:
     st.markdown("""
     **Shot Share** = Player shots / Team shots in matches they played
     
-    This helps separate players who are heavily involved in their team's attack.
+    This is the most important stat to calculate. Its the number of shots taken by the player divided by the number of shots taken by their team. 
+    
+    Since we don't have minutes played by player in the match, this is how we can normalize player output so we can compare apples to apples.
+
+    This is how we make sure that when comparing player styles we also compare their output within a system.
     """)
     
     with st.spinner("Calculating shot shares..."):
