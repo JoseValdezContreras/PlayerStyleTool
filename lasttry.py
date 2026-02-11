@@ -128,8 +128,6 @@ if df is not None:
     This is the most important stat to calculate. Its the number of shots taken by the player divided by the number of shots taken by their team. 
     
     Since we don't have minutes played by player in the match, this is how we can normalize player output so we can compare apples to apples.
-
-    This is how we make sure that when comparing player styles we also compare their output within a system.
     """)
     
     with st.spinner("Calculating shot shares..."):
@@ -201,7 +199,12 @@ if df is not None:
     st.header("🎯 Feature Selection")
     st.markdown("""
     **Just some good Housekeeping:**
-    Here is the correlation matrix for the features selected, this is just so you can see all features selected. There is a high correlation between some features but I decide to keep them since I believe they are important to discern how players actuaelly take shots and score goals.
+
+    First we filter out players so we only analyze those with at least 40 shots attempted. This way we can eliminate a ton of noise and variance from player in overrepresented hot or cold streaks. You can actually change that in the sidebar but be warned, this analysis is **ONLY FOR A 40 GOAL MINIMUM THRESHOLD** (Though it should apply to thresholds above and slightly below it)
+
+    Here is the correlation matrix for the features selected, this is just so you can see all features selected. 
+    
+    There is a high correlation between some features but I decide to keep them since I believe they are important to discern how players actuaelly take shots and score goals.
     """)
     
     cluster_features = df_player.drop(columns=['total_shots','xG_sum','Goal_sum','total_team_shots_all_matches'])
@@ -247,9 +250,13 @@ if df is not None:
     st.markdown("""
     **Some more good Housekeeping:**
     K is the number of groups you ask the computer to divide the players in. 
+    
     In this app you can change the number of clusters to see how groups change.
-    The analysis you'll see is for K=5 meaning I chose to divide the players in 5 groups
+    
+    **THE ANALYSIS YOU'LL SEE IS ONLY FOR K=5** meaning I chose to divide the players in 5 groups
+    
     Below is a graph showing the in-cluster inertia for K= 2-12, the way to interpret it is by seeing how much Inertia or differences inside the group are reduced. 
+    
     What you want is to get the minimum number of groups where the differences within each group stops changing. This graph doesn't have a super defined elbow but it wouldn't be super controversial to pick K=4, 5 or 6 
 
     """)
@@ -301,8 +308,11 @@ if df is not None:
     st.markdown("""
     **How to Read this Chart:**
     Each dot is a player.
+    
     Each color is the group the player belongs in according to the Machine Learning Algorithm
+    
     X axis is a mix of the contributors of Prinipal Component 1. The higher these attributes the more they go to the right
+    
     Y axis is a mix of the contributos of Principal Component 2. The higher these attributess the more they go up
     """)
     
@@ -367,6 +377,7 @@ if df is not None:
     st.markdown("""
     **The meat and potatoes, How to Read this Chart:**
     As in the Principal component chart, each dot is a player and every color is the group they belong in.
+    
     The X axis and Y axis dont really have a mathematical purpose beyond dividing the groups in a way us Humans can understand it.
     
     
@@ -398,9 +409,10 @@ if df is not None:
     # ============================================================================
     st.markdown("#### Cluster Average Style Profiles")
     st.markdown("""
-    Radar charts showing the average style profile for each cluster:
     How to read:
+    
     8 attributes are put in this circular chart, the more they stick out the more players stick out due to these attributes
+    
     Whats interesing here is the average shape of each cluster and the clear difference in shapes between clusters""")
 
     
@@ -515,8 +527,8 @@ if df is not None:
         - **Headers**: Percentage of shots with head (higher = more aerial threat)
         - **Open Play**: Percentage of shots from open play (higher = less set-piece dependent)
         - **Talisman**: Share of team's shots (higher = more central to attack)
-        - **Clinical**: xG overperformance (higher = better finishing than expected)
-        - **Set Piece Taker**: Percentage of direct free kicks taken
+        - **Clinical**: Average xG overperformance (higher = better finishing than expected)
+        - **Set Piece Taker**: Percentage of direct free kicks taken, I believe this is also an aproximation of who takes corners but I don't have data in this source to back that claim empirically
         
         **Interpretation Tips:**
         1. Compare cluster shapes to identify style differences
@@ -540,13 +552,18 @@ if df is not None:
                                       'Openplay_percent', 'Head_percent']])
     
     # Radar Charts
-    st.header("📊 Player Style Profiles")
-    st.markdown("""Stacked Radar Chart comparing player styles:
+    st.header("📊 Player Style Profile Comparison")
+    st.markdown("""
         How to read:
-        Same as the radar chart just one on top of the other to visualize diferences. 
-        You can click on any players on the list to see how they compare
+        
+        Same as the radar chart just one on top of the other to visualize diferences.
+        
+        You can click on any players on the list to see how they compare.
+        
         The default is Messi vs CR7
+        
         The main difference between the two? Cristiano on average shoots closer to the goal, takes headers while Messi rarely does. Messi is more Clinical meaning and is also given more set pieces to take. 
+        
         What makes them similar? They are the Talisman of their teams, they have the highest share of shots taken for their team""")
     
     radar_features = [
@@ -696,10 +713,10 @@ if df is not None:
         3. **Filtering**: Minimum 40 shots to reduce noise
         4. **Feature Selection**: Manual selection using correlation matrix
         5. **Scaling**: StandardScaler followed by L2 normalization
-        6. **Clustering**: Cosine K-Means with K=6 (optimal separation)
+        6. **Clustering**: Cosine K-Means with K=5 (optimal separation)
         
         ### Key Insights:
-        - **K=6** provides optimal separation
+        - **K=5** provides optimal separation
         - Defensive players cluster separately (mainly participate in set pieces)
         - Messi and Ronaldo are in different clusters (different styles)
         - Clear separation between open-play specialists and set-piece specialists
