@@ -269,7 +269,15 @@ if df is not None:
     with st.spinner(f"Clustering players into {CHOSEN_K} groups..."):
         kmeans = KMeans(n_clusters=CHOSEN_K, random_state=42, n_init=10)
         df_player['cluster'] = kmeans.fit_predict(X_cosine)
-
+        
+        # Show cluster distribution
+        cluster_counts = df_player['cluster'].value_counts().sort_index()
+        
+        cols = st.columns(CHOSEN_K)
+        for i, col in enumerate(cols):
+            if i < len(cluster_counts):
+                col.metric(f"Cluster {i}", cluster_counts.iloc[i])
+    
     # ========== RESULTS FIRST: ENHANCED VISUALIZATIONS ==========
     st.header("🎯 Results Overview")
     st.markdown("### Player Style Clusters - Key Findings")
@@ -296,22 +304,22 @@ if df is not None:
         cluster_df = df[df['cluster'] == cluster_num].copy()
         
         # Calculate distance from cluster center
-    center_x = cluster_df['tsne_x'].mean()
-    center_y = cluster_df['tsne_y'].mean()
-    cluster_df['dist_from_center'] = np.sqrt(
-            (cluster_df['tsne_x'] - center_x)**2 + 
-            (cluster_df['tsne_y'] - center_y)**2
+        center_x = cluster_df['X_avg'].mean()
+        center_y = cluster_df['Y_std'].mean()
+        cluster_df['dist_from_center'] = np.sqrt(
+            (cluster_df['X_avg'] - center_x)**2 + 
+            (cluster_df['Y_std'] - center_y)**2
         )
         
-    # Filter for relatively famous players (high shots)
-    famous_in_cluster = cluster_df[cluster_df['total_shots'] >= min_shots]
+        # Filter for relatively famous players (high shots)
+        famous_in_cluster = cluster_df[cluster_df['total_shots'] >= min_shots]
         
         if len(famous_in_cluster) == 0:
             # Fall back to any player if no one is famous enough
             famous_in_cluster = cluster_df
         
-    # Find player closest to center among famous players
-    representative = famous_in_cluster.nsmallest(1, 'dist_from_center')
+        # Find player closest to center among famous players
+        representative = famous_in_cluster.nsmallest(1, 'dist_from_center')
         
         return representative['player'].values[0] if len(representative) > 0 else None
     
@@ -329,7 +337,7 @@ if df is not None:
         if rep:
             players_to_label.add(rep)
     
-    # Create t-SNE coordinates
+    # Create t-SNE for visualization (separate from the one later in the code)
     tsne_viz = TSNE(n_components=2, random_state=42, perplexity=30)
     X_tsne_viz = tsne_viz.fit_transform(X_cosine)
     df_player['tsne_x'] = X_tsne_viz[:, 0]
@@ -538,15 +546,6 @@ if df is not None:
     st.markdown("---")
     
     # ========== ORIGINAL SECTIONS CONTINUE BELOW ==========
-    
-        
-        # Show cluster distribution
-    cluster_counts = df_player['cluster'].value_counts().sort_index()
-        
-    cols = st.columns(CHOSEN_K)
-    for i, col in enumerate(cols):
-            if i < len(cluster_counts):
-                col.metric(f"Cluster {i}", cluster_counts.iloc[i])
     
     # Cluster Visualization
     st.header("📈 Cluster Visualizations")
