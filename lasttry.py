@@ -938,60 +938,70 @@ with col_alt_2:
     )
     st.plotly_chart(fig_comp, use_container_width=True)
 
-st.header("🏁 Global Cluster Comparison (Faceted Z-Scores)")
-st.markdown("This grid compares every cluster's signature simultaneously. The center line in each box is the average player.")
+st.header("🏁 Global Cluster Comparison (8-Feature Z-Scores)")
+st.markdown("This grid compares every cluster across all 8 performance dimensions. The center line is the league average.")
 
-# 1. Setup Features and Labels
-z_features = ['xG_avg', 'X_avg', 'Y_std', 'Head_percent', 'shot_share', 'avgxGoverperformance']
-z_labels = ['Quality', 'Proximity', 'Range', 'Headers', 'Talisman', 'Clinical']
+# 1. Setup all 8 Features and Labels to match the Radar charts
+z_features = [
+    'xG_avg', 'X_avg', 'Y_std', 'Head_percent', 
+    'Openplay_percent', 'shot_share', 'avgxGoverperformance', 'DirectFreekick_percent'
+]
+z_labels = [
+    'Quality', 'Proximity', 'Range', 'Headers', 
+    'Open Play', 'Talisman', 'Clinical', 'Set Pieces'
+]
 
-# 2. Calculate Population Stats
+# 2. Calculate Population Stats (Mean and Std Dev) for normalization
 pop_mean = df_player[z_features].mean()
 pop_std = df_player[z_features].std()
 
-# 3. Calculate Z-Scores for ALL Clusters
+# 3. Build the dataset for the facets
 all_cluster_data = []
 
+# Sort clusters to keep them in order (0, 1, 2...)
 for cluster_id in sorted(df_player['cluster'].unique()):
-    # Get famous player name for the facet title
+    # Get the "Famous Player" (highest shot volume in the cluster)
     famous_player = df_player[df_player['cluster'] == cluster_id].sort_values('total_shots', ascending=False).iloc[0]['player']
     
-    # Calculate means and z-scores
+    # Calculate average stats for THIS cluster
     cluster_avg = df_player[df_player['cluster'] == cluster_id][z_features].mean()
+    
+    # Calculate Z-Scores: How many standard deviations is this cluster from the mean?
     z_scores = (cluster_avg - pop_mean) / pop_std
     
     for label, z in zip(z_labels, z_scores):
         all_cluster_data.append({
-            'Cluster': f"Cluster {cluster_id}: {famous_player}s",
+            'Cluster': f"Cluster {cluster_id}: The {famous_player}s",
             'Metric': label,
             'Z-Score': z,
-            'Color': 'Above Avg' if z > 0 else 'Below Avg'
+            'Style': 'Above Avg' if z > 0 else 'Below Avg'
         })
 
 facet_df = pd.DataFrame(all_cluster_data)
 
-# 4. Create Faceted Bar Plot
+# 4. Create the Faceted Plot
 fig_facet = px.bar(
     facet_df,
     x='Z-Score',
     y='Metric',
     facet_col='Cluster',
-    facet_col_wrap=3, # Shows 3 clusters per row
+    facet_col_wrap=3, # Shows 3 clusters per row (adjust to 2 if you prefer larger bars)
     orientation='h',
-    color='Color',
-    color_discrete_map={'Above Avg': '#00e676', 'Below Avg': '#ff5252'},
-    text_auto='.1f'
+    color='Style',
+    color_discrete_map={'Above Avg': '#00e676', 'Below Avg': '#ff5252'}, # Green/Red contrast
+    text_auto='.1f', # Shows the Z-score value on the bar
+    category_orders={"Metric": z_labels} # Keeps the 8 features in the same order as Radar
 )
 
-# 5. Clean up the layout
-fig_facet.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1])) # Removes "Cluster=" from titles
-fig_facet.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.3)
+# 5. Styling Tweak
+fig_facet.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1])) # Cleaner titles
+fig_facet.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.4) # Average line
+
 fig_facet.update_layout(
-    height=700,
+    height=800, # Increased height to accommodate all 8 features
     showlegend=False,
-    margin=dict(l=20, r=20, t=50, b=20),
-    xaxis=dict(range=[-2.2, 2.2]) # Keeps scale consistent across all facets
+    margin=dict(l=20, r=20, t=60, b=20),
+    xaxis=dict(range=[-2.5, 2.5], title="Standard Deviations from Average")
 )
 
 st.plotly_chart(fig_facet, use_container_width=True)
-
