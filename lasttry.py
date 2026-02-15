@@ -543,7 +543,7 @@ if df is not None:
         # Show cluster distribution
     cluster_counts = df_player['cluster'].value_counts().sort_index()
         
-        cols = st.columns(CHOSEN_K)
+    cols = st.columns(CHOSEN_K)
         for i, col in enumerate(cols):
             if i < len(cluster_counts):
                 col.metric(f"Cluster {i}", cluster_counts.iloc[i])
