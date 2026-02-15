@@ -304,93 +304,6 @@ for cluster_num in range(CHOSEN_K):
 
 # ---------- SIDE-BY-SIDE: t-SNE MAP AND CLUSTER RADARS ----------
 st.markdown("#### 🗺️ Interactive Cluster Analysis")
-# Create a normalized DataFrame for the heatmap
-heatmap_data = []
-cluster_labels = []
-
-for cluster_num in range(CHOSEN_K):
-    cluster_mask = df_player['cluster'] == cluster_num
-    if cluster_mask.any():
-        # Get average of normalized values for this cluster
-        avg_values = []
-        for feature in radar_features:
-            val = radar_normalized[cluster_mask][feature].mean()
-            avg_values.append(val)
-        
-        heatmap_data.append(avg_values)
-        cluster_labels.append(f"Cluster {cluster_num}")
-
-# Create the Heatmap
-fig_heatmap = go.Figure(data=go.Heatmap(
-    z=heatmap_data,
-    x=feature_labels,
-    y=cluster_labels,
-    colorscale='Viridis', # or 'Magma' for high contrast
-    colorbar=dict(title='Intensity'),
-    hoverongaps=False
-))
-
-fig_heatmap.update_layout(
-    title='<b>Cluster Style Heatmap</b><br><sub>Darker = Higher Value for Feature</sub>',
-    xaxis_side="top", # Put labels on top for easier reading
-    height=500,
-    margin=dict(l=10, r=10, t=100, b=10)
-)
-
-st.plotly_chart(fig_heatmap, use_container_width=True)
-
-with col_radar:
-    st.markdown("**Compare Cluster Profiles**")
-    
-    # 1. Allow user to select specific clusters to compare
-    selected_clusters_to_view = st.multiselect(
-        "Select Clusters to Compare (Max 3 recommended):",
-        options=range(CHOSEN_K),
-        default=[0, 1], # Default to showing just the first two
-        format_func=lambda x: f"Cluster {x}"
-    )
-    
-    fig_radar_interactive = go.Figure()
-
-    # 2. Loop ONLY through selected clusters
-    for cluster_num in selected_clusters_to_view:
-        # Get data from your pre-calculated dictionary
-        cluster_data = cluster_averages[cluster_num] 
-        
-        fig_radar_interactive.add_trace(go.Scatterpolar(
-            r=cluster_data['values'] + cluster_data['values'][:1],
-            theta=feature_labels + feature_labels[:1],
-            fill='toself',
-            # Use the consistent color map with lower opacity
-            fillcolor=f"rgba{tuple(int(cluster_data['color'].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)}",
-            line=dict(color=cluster_data['color'], width=3),
-            name=f'Cluster {cluster_num}'
-        ))
-
-    # 3. Optional: Add a "Ghost" trace for the Global Average as a baseline
-    global_avgs = [radar_normalized[f].mean() for f in radar_features]
-    fig_radar_interactive.add_trace(go.Scatterpolar(
-        r=global_avgs + global_avgs[:1],
-        theta=feature_labels + feature_labels[:1],
-        fill='none',
-        line=dict(color='grey', width=1, dash='dot'),
-        name='Global Avg',
-        hoverinfo='skip'
-    ))
-
-    fig_radar_interactive.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=True, range=[0, 1], showticklabels=False)
-        ),
-        title="<b>Cluster Comparison</b>",
-        legend=dict(yanchor="bottom", y=-0.2, xanchor="center", x=0.5, orientation="h"),
-        height=600,
-        margin=dict(l=40, r=40, t=40, b=40)
-    )
-    
-    st.plotly_chart(fig_radar_interactive, use_container_width=True)
-
-
 
 # Create two columns for side-by-side display
 col_tsne, col_radar = st.columns([1.2, 1])
@@ -398,6 +311,8 @@ col_tsne, col_radar = st.columns([1.2, 1])
 # Left column: t-SNE Map
 with col_tsne:
     st.markdown("**Cluster Map: Player Similarity Space**")
+
+    
     
     
     fig_tsne = go.Figure()
@@ -964,3 +879,91 @@ st.markdown("""
 **Data Science Portfolio Project** | Football Player Style Clustering  
 *Built with Python, Scikit-learn, and Streamlit*
 """)
+
+
+# Create a normalized DataFrame for the heatmap
+heatmap_data = []
+cluster_labels = []
+
+for cluster_num in range(CHOSEN_K):
+    cluster_mask = df_player['cluster'] == cluster_num
+    if cluster_mask.any():
+        # Get average of normalized values for this cluster
+        avg_values = []
+        for feature in radar_features:
+            val = radar_normalized[cluster_mask][feature].mean()
+            avg_values.append(val)
+        
+        heatmap_data.append(avg_values)
+        cluster_labels.append(f"Cluster {cluster_num}")
+
+# Create the Heatmap
+fig_heatmap = go.Figure(data=go.Heatmap(
+    z=heatmap_data,
+    x=feature_labels,
+    y=cluster_labels,
+    colorscale='Viridis', # or 'Magma' for high contrast
+    colorbar=dict(title='Intensity'),
+    hoverongaps=False
+))
+
+fig_heatmap.update_layout(
+    title='<b>Cluster Style Heatmap</b><br><sub>Darker = Higher Value for Feature</sub>',
+    xaxis_side="top", # Put labels on top for easier reading
+    height=500,
+    margin=dict(l=10, r=10, t=100, b=10)
+)
+
+st.plotly_chart(fig_heatmap, use_container_width=True)
+
+    st.markdown("**Compare Cluster Profiles**")
+    
+    # 1. Allow user to select specific clusters to compare
+    selected_clusters_to_view = st.multiselect(
+        "Select Clusters to Compare (Max 3 recommended):",
+        options=range(CHOSEN_K),
+        default=[0, 1], # Default to showing just the first two
+        format_func=lambda x: f"Cluster {x}"
+    )
+    
+    fig_radar_interactive = go.Figure()
+
+    # 2. Loop ONLY through selected clusters
+    for cluster_num in selected_clusters_to_view:
+        # Get data from your pre-calculated dictionary
+        cluster_data = cluster_averages[cluster_num] 
+        
+        fig_radar_interactive.add_trace(go.Scatterpolar(
+            r=cluster_data['values'] + cluster_data['values'][:1],
+            theta=feature_labels + feature_labels[:1],
+            fill='toself',
+            # Use the consistent color map with lower opacity
+            fillcolor=f"rgba{tuple(int(cluster_data['color'].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)}",
+            line=dict(color=cluster_data['color'], width=3),
+            name=f'Cluster {cluster_num}'
+        ))
+
+    # 3. Optional: Add a "Ghost" trace for the Global Average as a baseline
+    global_avgs = [radar_normalized[f].mean() for f in radar_features]
+    fig_radar_interactive.add_trace(go.Scatterpolar(
+        r=global_avgs + global_avgs[:1],
+        theta=feature_labels + feature_labels[:1],
+        fill='none',
+        line=dict(color='grey', width=1, dash='dot'),
+        name='Global Avg',
+        hoverinfo='skip'
+    ))
+
+    fig_radar_interactive.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], showticklabels=False)
+        ),
+        title="<b>Cluster Comparison</b>",
+        legend=dict(yanchor="bottom", y=-0.2, xanchor="center", x=0.5, orientation="h"),
+        height=600,
+        margin=dict(l=40, r=40, t=40, b=40)
+    )
+    
+    st.plotly_chart(fig_radar_interactive, use_container_width=True)
+
+
