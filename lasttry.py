@@ -351,8 +351,8 @@ st.markdown("""
 st.markdown("#### 📊 Cluster Style Profiles")
 
  # Calculate cluster averages
-    cluster_averages = []
-    cluster_colors = plt.cm.Set3(np.linspace(0, 1, CHOSEN_K))
+cluster_averages = []
+cluster_colors = plt.cm.Set3(np.linspace(0, 1, CHOSEN_K))
     
     for cluster_num in range(CHOSEN_K):
         cluster_mask = df_player['cluster'] == cluster_num
