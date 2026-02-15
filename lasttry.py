@@ -938,3 +938,60 @@ with col_alt_2:
     )
     st.plotly_chart(fig_comp, use_container_width=True)
 
+st.header("🏁 Global Cluster Comparison (Faceted Z-Scores)")
+st.markdown("This grid compares every cluster's signature simultaneously. The center line in each box is the average player.")
+
+# 1. Setup Features and Labels
+z_features = ['xG_avg', 'X_avg', 'Y_std', 'Head_percent', 'shot_share', 'avgxGoverperformance']
+z_labels = ['Quality', 'Proximity', 'Range', 'Headers', 'Talisman', 'Clinical']
+
+# 2. Calculate Population Stats
+pop_mean = df_player[z_features].mean()
+pop_std = df_player[z_features].std()
+
+# 3. Calculate Z-Scores for ALL Clusters
+all_cluster_data = []
+
+for cluster_id in sorted(df_player['cluster'].unique()):
+    # Get famous player name for the facet title
+    famous_player = df_player[df_player['cluster'] == cluster_id].sort_values('total_shots', ascending=False).iloc[0]['player']
+    
+    # Calculate means and z-scores
+    cluster_avg = df_player[df_player['cluster'] == cluster_id][z_features].mean()
+    z_scores = (cluster_avg - pop_mean) / pop_std
+    
+    for label, z in zip(z_labels, z_scores):
+        all_cluster_data.append({
+            'Cluster': f"Cluster {cluster_id}: {famous_player}s",
+            'Metric': label,
+            'Z-Score': z,
+            'Color': 'Above Avg' if z > 0 else 'Below Avg'
+        })
+
+facet_df = pd.DataFrame(all_cluster_data)
+
+# 4. Create Faceted Bar Plot
+fig_facet = px.bar(
+    facet_df,
+    x='Z-Score',
+    y='Metric',
+    facet_col='Cluster',
+    facet_col_wrap=3, # Shows 3 clusters per row
+    orientation='h',
+    color='Color',
+    color_discrete_map={'Above Avg': '#00e676', 'Below Avg': '#ff5252'},
+    text_auto='.1f'
+)
+
+# 5. Clean up the layout
+fig_facet.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1])) # Removes "Cluster=" from titles
+fig_facet.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.3)
+fig_facet.update_layout(
+    height=700,
+    showlegend=False,
+    margin=dict(l=20, r=20, t=50, b=20),
+    xaxis=dict(range=[-2.2, 2.2]) # Keeps scale consistent across all facets
+)
+
+st.plotly_chart(fig_facet, use_container_width=True)
+
