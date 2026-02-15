@@ -471,13 +471,15 @@ with col_radar:
     else:
         # Show all cluster averages
         for cluster_num, cluster_data in cluster_averages.items():
+            base_color= cluster_data['color']
+            
             fig_radar_interactive.add_trace(go.Scatterpolar(
                 r=cluster_data['values'] + cluster_data['values'][:1],
                 theta=feature_labels + feature_labels[:1],
                 fill='toself',
-                fillcolor=cluster_data['color'],
-                line=dict(color=cluster_data['color'], width=2),
-                opacity=0.5,
+                fillcolor=base_color.replace('rgb','rgba').replace(')',',.2)',
+                line=dict(color=base_color, width=2),
+                opacity=1.0,
                 name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
             ))
         
@@ -937,82 +939,3 @@ with col_alt_2:
         margin=dict(l=40, r=40, t=30, b=40)
     )
     st.plotly_chart(fig_comp, use_container_width=True)
-
-st.header("🏁 Global Cluster Comparison (8-Feature Z-Scores)")
-
-# 1. THE DEFINITIVE LIST (Must match your df_player column names exactly)
-z_features = [
-    'xG_avg', 
-    'X_avg', 
-    'Y_std', 
-    'Head_percent', 
-    'Openplay_percent', 
-    'shot_share', 
-    'avgxGoverperformance', 
-    'DirectFreekick_percent'
-]
-
-# Mapping names for the UI to make them look professional
-z_labels = {
-    'xG_avg': 'Chance Quality',
-    'X_avg': 'Goal Proximity',
-    'Y_std': 'Movement Range',
-    'Head_percent': 'Heading Ability',
-    'Openplay_percent': 'Open Play Style',
-    'shot_share': 'Talisman Index',
-    'avgxGoverperformance': 'Clinical Finishing',
-    'DirectFreekick_percent': 'Set Piece Threat'
-}
-
-# 2. Safety Check: Only use features that actually exist in the dataframe
-available_features = [f for f in z_features if f in df_player.columns]
-
-# 3. Calculate Stats
-pop_mean = df_player[available_features].mean()
-pop_std = df_player[available_features].std()
-
-all_cluster_data = []
-
-for cluster_id in sorted(df_player['cluster'].unique()):
-    # Get famous player
-    famous_player = df_player[df_player['cluster'] == cluster_id].sort_values('total_shots', ascending=False).iloc[0]['player']
-    
-    # Calculate Cluster Z-Scores
-    cluster_avg = df_player[df_player['cluster'] == cluster_id][available_features].mean()
-    z_scores = (cluster_avg - pop_mean) / pop_std
-    
-    for feat in available_features:
-        all_cluster_data.append({
-            'Cluster': f"Cluster {cluster_id}: {famous_player}s",
-            'Metric': z_labels[feat],
-            'Z-Score': z_scores[feat],
-            'Color': 'Positive' if z_scores[feat] > 0 else 'Negative'
-        })
-
-facet_df = pd.DataFrame(all_cluster_data)
-
-# 4. Create Plot
-fig_facet = px.bar(
-    facet_df,
-    x='Z-Score',
-    y='Metric',
-    facet_col='Cluster',
-    facet_col_wrap=3,
-    orientation='h',
-    color='Color',
-    color_discrete_map={'Positive': '#00e676', 'Negative': '#ff5252'},
-    text_auto='.1f',
-    # This line ensures the order is identical in every chart
-    category_orders={"Metric": list(z_labels.values())} 
-)
-
-fig_facet.update_layout(
-    height=900, # Tall enough to see all 8 rows clearly
-    xaxis=dict(range=[-3, 3]), # Standardize the scale
-    showlegend=False
-)
-
-# Remove "Cluster=" prefix from titles
-fig_facet.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-
-st.plotly_chart(fig_facet, use_container_width=True)
