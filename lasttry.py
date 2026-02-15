@@ -358,7 +358,7 @@ for cluster_num in range(CHOSEN_K):
     cluster_mask = df_player['cluster'] == cluster_num
     cluster_size = sum(cluster_mask)
         
-        if cluster_size > 0:
+    if cluster_size > 0:
             # Get average values for this cluster
             avg_values = []
             for feature in radar_features:
