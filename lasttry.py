@@ -31,14 +31,14 @@ st.set_page_config(
 # =============================================================================
 # Define colors for clusters 0-12 (supports K up to 13)
 CLUSTER_COLOR_MAP = {
-    0: '#004E98',   # Primary Blue
-    1: '#FF6700',   # Vivid Orange
-    2: '#208B3A',   # Emerald Green
-    3: '#C9184A',   # Bright Berry
-    4: '#5A189A',   # Deep Purple
-    5: '#00B4D8',   # Electric Cyan
-    6: '#FFB703',   # Warm Gold
-    7: '#495057',   # Cool Gray/Slate
+    0: '#00B4D8',   # Cyan
+    1: '#F15BB5',   # Magenta
+    2: '#FEE440',   # Yellow
+    3: '#E63946',   # Red
+    4: '#003566',   # Deep Blue
+    5: '#00F5D4',   # Bright Teal
+    6: '#9B5DE5',   # Violet
+    7: '#2D3142',   # Slate Charcoal
     8: '#D9D9D9',   # Gray
     9: '#BC80BD',   # Purple
     10: '#CCEBC5',  # Mint
