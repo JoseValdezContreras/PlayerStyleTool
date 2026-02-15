@@ -5,6 +5,7 @@ Created on Fri Feb  6 21:08:27 2026
 @author: josev
 """
 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -84,7 +85,7 @@ st.sidebar.markdown("""
 """)
 
 # Main content
-st.header("📊 Data Overview")
+
 
 # Load data
 @st.cache_data
@@ -99,184 +100,154 @@ def load_data():
 df = load_data()
 
 if df is not None:
-    # Basic stats
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Rows", f"{len(df):,}")
-    with col2:
-        st.metric("Unique Players", df['player'].nunique())
-    with col3:
-        st.metric("Years Covered", f"{df['year'].min()}-{df['year'].max()}")
-    with col4:
-        st.metric("Total Matches", df['match_id'].nunique())
+    # ========== SILENT PROCESSING + RESULTS FIRST ==========
+    with st.spinner("Processing data and clustering players..."):
+        # Keep relevant columns
+        df_filtered = df[['X','Y','xG','player','situation','shotType','GOAL','match_id','team ']]
     
-    # Show sample data
-    with st.expander("View Sample Data"):
-        st.dataframe(df.head(10))
+        # Calculate normalized shots by team
+        st.markdown("""
+        **Shot Share** = Player shots / Team shots in matches they played
     
-    # Data Processing Section
-    st.header("🔧 Data Processing")
+        This helps separate players who are heavily involved in their team's attack.
+        """)
     
-    # Keep relevant columns
-    df_filtered = df[['X','Y','xG','player','situation','shotType','GOAL','match_id','team ']]
-    
-    # Calculate normalized shots by team
-    st.markdown("#### Step 1: Calculate Shot Share")
-    st.markdown("""
-    **Shot Share** = Player shots / Team shots in matches they played
-    
-    This helps separate players who are heavily involved in their team's attack.
-    """)
-    
-    with st.spinner("Calculating shot shares..."):
-        # Calculate shot share (from your original code)
-        df_with_team = df_filtered.copy()
-        df_with_team['match_team_id'] = df_with_team['match_id'].astype(str) + '_' + df_with_team['team '].astype(str)
+        with st.spinner("Calculating shot shares..."):
+            # Calculate shot share (from your original code)
+            df_with_team = df_filtered.copy()
+            df_with_team['match_team_id'] = df_with_team['match_id'].astype(str) + '_' + df_with_team['team '].astype(str)
         
-        shots_per_match_team = df_with_team.groupby('match_team_id').size().reset_index(name='team_shots_in_match')
-        player_match_unique = df_with_team[['player', 'match_team_id']].drop_duplicates()
-        player_match_unique = player_match_unique.merge(shots_per_match_team, on='match_team_id', how='left')
+            shots_per_match_team = df_with_team.groupby('match_team_id').size().reset_index(name='team_shots_in_match')
+            player_match_unique = df_with_team[['player', 'match_team_id']].drop_duplicates()
+            player_match_unique = player_match_unique.merge(shots_per_match_team, on='match_team_id', how='left')
         
-        player_normalized_shots = player_match_unique.groupby('player').agg({
-            'team_shots_in_match': 'sum',
-            'match_team_id': 'count'
-        }).rename(columns={
-            'team_shots_in_match': 'total_team_shots_all_matches',
-            'match_team_id': 'matches_played'
-        }).reset_index()
+            player_normalized_shots = player_match_unique.groupby('player').agg({
+                'team_shots_in_match': 'sum',
+                'match_team_id': 'count'
+            }).rename(columns={
+                'team_shots_in_match': 'total_team_shots_all_matches',
+                'match_team_id': 'matches_played'
+            }).reset_index()
         
-        player_shot_counts = df_with_team.groupby('player').size().reset_index(name='player_shots')
-        player_normalized_shots = player_normalized_shots.merge(player_shot_counts, on='player', how='left')
-        player_normalized_shots['shot_share'] = (
-            player_normalized_shots['player_shots'] / player_normalized_shots['total_team_shots_all_matches']
-        )
+            player_shot_counts = df_with_team.groupby('player').size().reset_index(name='player_shots')
+            player_normalized_shots = player_normalized_shots.merge(player_shot_counts, on='player', how='left')
+            player_normalized_shots['shot_share'] = (
+                player_normalized_shots['player_shots'] / player_normalized_shots['total_team_shots_all_matches']
+            )
     
-    # Aggregate by player
-    st.markdown("#### Step 2: Aggregate Player Features")
+        # Aggregate by player
     
-    with st.spinner("Aggregating player features..."):
-        df_player = df_filtered.groupby('player').agg(
-            X_avg = ('X', 'mean'),
-            Y_std = ('Y', 'std'),
-            xG_avg = ('xG','mean'),
-            xG_sum = ('xG','sum'),
-            Goal_sum = ('GOAL','sum'),
-            total_shots = ('situation', 'count'),
-            Head_percent = ('shotType', lambda x: (x== 'Head').mean()),
-            Openplay_percent = ('situation', lambda x: (x=='OpenPlay').mean()),
-            DirectFreekick_percent = ('situation', lambda x: (x=='DirectFreekick').mean()),
-            Corner_percent = ('situation', lambda x: (x=='FromCorner').mean()),
-            DirectFreekick_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'DirectFreekick')].sum() / x.sum() if x.sum() > 0 else 0),
-            Penalty_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'Penalty')].sum() / x.sum() if x.sum() > 0 else 0),
-            Openplay_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'OpenPlay')].sum() / x.sum() if x.sum() > 0 else 0),
-        ).reset_index()
+        with st.spinner("Aggregating player features..."):
+            df_player = df_filtered.groupby('player').agg(
+                X_avg = ('X', 'mean'),
+                Y_std = ('Y', 'std'),
+                xG_avg = ('xG','mean'),
+                xG_sum = ('xG','sum'),
+                Goal_sum = ('GOAL','sum'),
+                total_shots = ('situation', 'count'),
+                Head_percent = ('shotType', lambda x: (x== 'Head').mean()),
+                Openplay_percent = ('situation', lambda x: (x=='OpenPlay').mean()),
+                DirectFreekick_percent = ('situation', lambda x: (x=='DirectFreekick').mean()),
+                Corner_percent = ('situation', lambda x: (x=='FromCorner').mean()),
+                DirectFreekick_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'DirectFreekick')].sum() / x.sum() if x.sum() > 0 else 0),
+                Penalty_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'Penalty')].sum() / x.sum() if x.sum() > 0 else 0),
+                Openplay_goal_percent = ('GOAL', lambda x: x[(df_filtered.loc[x.index, 'situation'] == 'OpenPlay')].sum() / x.sum() if x.sum() > 0 else 0),
+            ).reset_index()
         
-        # Merge shot share
-        df_player = df_player.merge(
-            player_normalized_shots[['player', 'total_team_shots_all_matches', 'shot_share']], 
-            on='player', 
-            how='left'
-        )
+            # Merge shot share
+            df_player = df_player.merge(
+                player_normalized_shots[['player', 'total_team_shots_all_matches', 'shot_share']], 
+                on='player', 
+                how='left'
+            )
         
-        # Filter by minimum shots
-        players_before = len(df_player)
-        df_player = df_player[df_player['total_shots'] >= MIN_SHOTS_THRESHOLD]
-        players_after = len(df_player)
+            # Filter by minimum shots
+            players_before = len(df_player)
+            df_player = df_player[df_player['total_shots'] >= MIN_SHOTS_THRESHOLD]
+            players_after = len(df_player)
         
-        # Calculate xG overperformance
-        df_player['avgxGoverperformance'] = (df_player.Goal_sum - df_player.xG_sum) / df_player.total_shots
+            # Calculate xG overperformance
+            df_player['avgxGoverperformance'] = (df_player.Goal_sum - df_player.xG_sum) / df_player.total_shots
     
-    # Show filtering results
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Players Before Filtering", players_before)
-    with col2:
-        st.metric("Players After Filtering", players_after, delta=f"-{players_before - players_after}")
+        # Show filtering results
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Players Before Filtering", players_before)
+        with col2:
+            st.metric("Players After Filtering", players_after, delta=f"-{players_before - players_after}")
     
-    # Feature Selection
-    st.header("🎯 Feature Selection")
+        # Feature Selection
     
-    cluster_features = df_player.drop(columns=['total_shots','xG_sum','Goal_sum','total_team_shots_all_matches'])
+        cluster_features = df_player.drop(columns=['total_shots','xG_sum','Goal_sum','total_team_shots_all_matches'])
     
-    # Correlation matrix
-    st.markdown("#### Correlation Matrix")
+        # Correlation matrix
     
-    with st.spinner("Calculating correlations..."):
-        correlation_matrix = cluster_features.drop('player', axis=1).corr()
+        with st.spinner("Calculating correlations..."):
+            correlation_matrix = cluster_features.drop('player', axis=1).corr()
         
-        fig, ax = plt.subplots(figsize=(12, 10))
-        sns.heatmap(correlation_matrix, 
-                    annot=True,
-                    fmt='.2f',
-                    cmap='coolwarm',
-                    center=0,
-                    square=False,
-                    linewidths=0.5,
-                    ax=ax)
-        ax.set_title('Correlation Matrix of Player Features')
-        st.pyplot(fig)
+            fig, ax = plt.subplots(figsize=(12, 10))
+            sns.heatmap(correlation_matrix, 
+                        annot=True,
+                        fmt='.2f',
+                        cmap='coolwarm',
+                        center=0,
+                        square=False,
+                        linewidths=0.5,
+                        ax=ax)
+            ax.set_title('Correlation Matrix of Player Features')
+            st.pyplot(fig)
     
-    st.markdown("""
-    **Interpretation:**
-    - High correlation between Head_percent and Corner_percent (expected)
-    - xG_avg correlates with X_avg (closer to goal = higher xG)
-    - Low correlations indicate independent style dimensions
-    """)
+        st.markdown("""
+        **Interpretation:**
+        - High correlation between Head_percent and Corner_percent (expected)
+        - xG_avg correlates with X_avg (closer to goal = higher xG)
+        - Low correlations indicate independent style dimensions
+        """)
     
-    # Clustering Section
-    st.header("🎪 Player Clustering")
+        # Clustering Section
     
-    # Prepare data for clustering
-    scaler = StandardScaler()
-    normalizer = Normalizer(norm='l2')
+        # Prepare data for clustering
+        scaler = StandardScaler()
+        normalizer = Normalizer(norm='l2')
     
-    cluster_features_indexed = cluster_features.set_index('player')
-    X_scaled = scaler.fit_transform(cluster_features_indexed)
-    X_cosine = normalizer.fit_transform(X_scaled)
+        cluster_features_indexed = cluster_features.set_index('player')
+        X_scaled = scaler.fit_transform(cluster_features_indexed)
+        X_cosine = normalizer.fit_transform(X_scaled)
     
-    # Elbow Method
-    st.markdown("#### Determining Optimal Number of Clusters")
+        # Elbow Method
     
-    with st.spinner("Running elbow method..."):
-        inertia_values = []
-        k_range = range(2, 13)
+        with st.spinner("Running elbow method..."):
+            inertia_values = []
+            k_range = range(2, 13)
         
-        for k in k_range:
-            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
-            kmeans.fit(X_cosine)
-            inertia_values.append(kmeans.inertia_)
+            for k in k_range:
+                kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+                kmeans.fit(X_cosine)
+                inertia_values.append(kmeans.inertia_)
         
-        # Plot elbow curve
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(k_range, inertia_values, marker='o', color='b', linewidth=2, markersize=8)
-        ax.set_title('Elbow Method for Optimal K', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Number of Clusters (K)', fontsize=12)
-        ax.set_ylabel('Inertia (Within-Cluster Sum of Squares)', fontsize=12)
-        ax.set_xticks(k_range)
-        ax.grid(True, alpha=0.3)
-        st.pyplot(fig)
+            # Plot elbow curve
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(k_range, inertia_values, marker='o', color='b', linewidth=2, markersize=8)
+            ax.set_title('Elbow Method for Optimal K', fontsize=16, fontweight='bold')
+            ax.set_xlabel('Number of Clusters (K)', fontsize=12)
+            ax.set_ylabel('Inertia (Within-Cluster Sum of Squares)', fontsize=12)
+            ax.set_xticks(k_range)
+            ax.grid(True, alpha=0.3)
+            st.pyplot(fig)
     
-    st.markdown(f"""
-    **Selected K = 5**
+        st.markdown(f"""
+        **Selected K = 5**
     
-    Reasoning from analysis:
-    - K=5 Messi and Ronaldo are in different clusters
-    - K=6 Average radar charts are too similar between certain groups. Makes them look like the same style of player just a little bit worse.
-    - K=5 Definite Distinction between player styles.
-    """)
+        Reasoning from analysis:
+        - K=5 Messi and Ronaldo are in different clusters
+        - K=6 Average radar charts are too similar between certain groups. Makes them look like the same style of player just a little bit worse.
+        - K=5 Definite Distinction between player styles.
+        """)
     
-    # Apply clustering
-    with st.spinner(f"Clustering players into {CHOSEN_K} groups..."):
-        kmeans = KMeans(n_clusters=CHOSEN_K, random_state=42, n_init=10)
-        df_player['cluster'] = kmeans.fit_predict(X_cosine)
-        
-        # Show cluster distribution
-        cluster_counts = df_player['cluster'].value_counts().sort_index()
-        
-        cols = st.columns(CHOSEN_K)
-        for i, col in enumerate(cols):
-            if i < len(cluster_counts):
-                col.metric(f"Cluster {i}", cluster_counts.iloc[i])
+        # Apply clustering
+        with st.spinner(f"Clustering players into {CHOSEN_K} groups..."):
+            kmeans = KMeans(n_clusters=CHOSEN_K, random_state=42, n_init=10)
+            df_player['cluster'] = kmeans.fit_predict(X_cosine)
     
     # ========== RESULTS FIRST: ENHANCED VISUALIZATIONS ==========
     st.header("🎯 Results Overview")
@@ -544,6 +515,29 @@ if df is not None:
     st.markdown("---")
     
     # ========== ORIGINAL SECTIONS CONTINUE BELOW ==========
+
+    # ========== DETAILED ANALYSIS (Original Flow) ==========
+    st.header("📊 Data Overview")
+
+    # Basic stats
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Rows", f"{len(df):,}")
+    with col2:
+        st.metric("Unique Players", df['player'].nunique())
+    with col3:
+        st.metric("Years Covered", f"{df['year'].min()}-{df['year'].max()}")
+    with col4:
+        st.metric("Total Matches", df['match_id'].nunique())
+    
+    # Show sample data
+    with st.expander("View Sample Data"):
+        st.dataframe(df.head(10))
+    
+    # Data Processing Section
+    st.header("🔧 Data Processing")
+    
+    st.markdown("#### Data processing was performed to generate the clusters shown above.")
     
     # Cluster Visualization
     st.header("📈 Cluster Visualizations")
