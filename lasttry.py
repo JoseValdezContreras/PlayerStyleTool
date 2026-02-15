@@ -445,7 +445,7 @@ with col_radar:
             fill='toself',
             fillcolor=cluster_avg['color'],
             line=dict(color=cluster_avg['color'], width=2),
-            opacity=0.4,
+            opacity=1.0,
             name=f'Cluster {player_cluster} Average'
         ))
 
