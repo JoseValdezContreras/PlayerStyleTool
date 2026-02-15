@@ -1002,3 +1002,50 @@ fig_parallel.update_layout(
 )
 
 st.plotly_chart(fig_parallel, use_container_width=True)
+
+st.header("🎯 Player Style Deviation (Z-Scores)")
+st.markdown("This chart shows how a player compares to the average. **0** is the average player; **+2** means they are in the top ~2% for that stat.")
+
+# 1. Select a player to analyze
+target_player = st.selectbox("Select Player for Z-Score Analysis:", df_player['player'].sort_values(), key="zscore_select")
+
+# 2. Calculate Z-Scores for the features
+# Formula: (Value - Mean) / Standard Deviation
+features_to_plot = ['xG_avg', 'X_avg', 'Y_std', 'Head_percent', 'shot_share', 'avgxGoverperformance']
+labels = ['Quality', 'Proximity', 'Range', 'Headers', 'Talisman', 'Finishing']
+
+player_data = df_player[df_player['player'] == target_player][features_to_plot]
+mean_vals = df_player[features_to_plot].mean()
+std_vals = df_player[features_to_plot].std()
+
+z_scores = (player_data - mean_vals) / std_vals
+z_scores_list = z_scores.values.flatten()
+
+# 3. Create the Deviation Bar Chart
+deviation_df = pd.DataFrame({
+    'Metric': labels,
+    'Z-Score': z_scores_list,
+    'Color': ['Above Average' if x > 0 else 'Below Average' for x in z_scores_list]
+})
+
+fig_z = px.bar(
+    deviation_df,
+    x='Z-Score',
+    y='Metric',
+    orientation='h',
+    color='Color',
+    color_discrete_map={'Above Average': '#00e676', 'Below Average': '#ff5252'},
+    text_auto='.2f'
+)
+
+# Add a vertical line at 0 (the average)
+fig_z.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.5)
+
+fig_z.update_layout(
+    xaxis_title="Standard Deviations from Mean",
+    yaxis_title="",
+    showlegend=False,
+    height=400
+)
+
+st.plotly_chart(fig_z, use_container_width=True)
