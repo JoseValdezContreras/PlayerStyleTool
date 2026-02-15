@@ -481,7 +481,7 @@ with col_radar:
                 line=dict(color=base_color, width=2),
                 opacity=1.0,
                 name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
-            ))
+            )))
         
         title_text = '<b>All Cluster Averages</b><br><sub>Select a player to compare</sub>'
     
