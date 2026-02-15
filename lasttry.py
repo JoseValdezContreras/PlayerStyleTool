@@ -444,7 +444,7 @@ with col_radar:
             theta=feature_labels + feature_labels[:1],
             fill='toself',
             fillcolor=cluster_avg['color'],
-            line=dict(color=color_hex, width=3),
+            line=dict(color='#FF007F', width=3),
             opacity=0.4,
             name=f'Cluster {player_cluster} Average'
         ))
