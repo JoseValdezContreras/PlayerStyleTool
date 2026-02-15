@@ -292,9 +292,7 @@ if df is not None:
     # List of famous players to label
     famous_players = [
         'Erling Haaland', 'Neymar', 'Lionel Messi', 'Cristiano Ronaldo', 
-        'Robert Lewandowski', 'Kylian Mbappe-Lottin', 'Antoinne Griezmann', 'Paulo Dybala', 'Bruno Fernandes', 'Marcelo', 'Toni Kroos', 'Ousmane Dembélé', 'Memphis Depay', 'Son Heung-Min', 'Kevin De Bruyne', 'Sergio Ramos',
-        'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah
-        'Zlatan Ibrahimovic', 'Gareth Bale', 'Thomas Müller', 'Eden Hazard', 'Gavi', 'Jude Bellingham', 'Eduardo Camavinga', 'Aurelien Tchouameni', 'Jamal Musiala', 'Josko Gvardiol', 'William Saliba', 'Nuno Mendes', 'Nico Williams'
+        'Robert Lewandowski', 'Kylian Mbappe-Lottin', 'Antoinne Griezmann', 'Paulo Dybala', 'Bruno Fernandes', 'Marcelo', 'Toni Kroos', 'Ousmane Dembélé', 'Memphis Depay', 'Son Heung-Min', 'Kevin De Bruyne', 'Sergio Ramos', 'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah', 'Zlatan Ibrahimovic', 'Gareth Bale', 'Thomas Müller', 'Eden Hazard', 'Gavi', 'Jude Bellingham', 'Eduardo Camavinga', 'Aurelien Tchouameni', 'Jamal Musiala', 'Josko Gvardiol', 'William Saliba', 'Nuno Mendes', 'Nico Williams'
     ]
     
     # Function to find cluster center representatives
