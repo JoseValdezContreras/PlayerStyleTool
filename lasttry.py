@@ -879,3 +879,93 @@ st.markdown("""
 **Data Science Portfolio Project** | Football Player Style Clustering  
 *Built with Python, Scikit-learn, and Streamlit*
 """)
+
+# =============================================================================
+# APPENDIX: ALTERNATIVE VISUALIZATIONS (PASTE AT END OF SCRIPT)
+# =============================================================================
+
+st.markdown("---")
+st.header("🧪 Experimental: Clearer Visualizations")
+st.markdown("Since 8 clusters can be messy in a single radar chart, here are two cleaner ways to compare them.")
+
+col_alt_1, col_alt_2 = st.columns([1, 1])
+
+# --- OPTION 1: THE HEATMAP (Best for finding patterns) ---
+with col_alt_1:
+    st.subheader("1. Style Heatmap")
+    st.markdown("Values closer to yellow/bright are higher than average.")
+    
+    # 1. Prepare Data for Heatmap
+    heatmap_z = []
+    heatmap_y = []
+    
+    for c_id in range(CHOSEN_K):
+        # Get the same values we used for the radar
+        vals = cluster_averages[c_id]['values']
+        heatmap_z.append(vals)
+        heatmap_y.append(f"Cluster {c_id}")
+    
+    # 2. Plot Heatmap
+    fig_heat = go.Figure(data=go.Heatmap(
+        z=heatmap_z,
+        x=feature_labels,
+        y=heatmap_y,
+        colorscale='Viridis',
+        colorbar=dict(title='Percentile'),
+        xgap=2, # Gap between cells
+        ygap=2
+    ))
+    
+    fig_heat.update_layout(
+        height=500,
+        margin=dict(l=0, r=0, t=30, b=0),
+        xaxis_side="top"
+    )
+    st.plotly_chart(fig_heat, use_container_width=True)
+
+# --- OPTION 2: THE SELECTIVE RADAR (Best for direct comparison) ---
+with col_alt_2:
+    st.subheader("2. Cluster Comparator")
+    st.markdown("Select specific clusters to overlay (instead of all 8).")
+    
+    # 1. Multiselect Control
+    selected_clusters = st.multiselect(
+        "Select Clusters to Compare:",
+        options=range(CHOSEN_K),
+        default=[0, 1], # Start with just 2 for clarity
+        key='alt_radar_select'
+    )
+    
+    # 2. Plot Custom Radar
+    fig_comp = go.Figure()
+    
+    for c_id in selected_clusters:
+        data = cluster_averages[c_id]
+        color_hex = data['color']
+        
+        # Convert hex to rgba for fill opacity
+        # (Assuming color_hex is like '#RRGGBB')
+        r = int(color_hex[1:3], 16)
+        g = int(color_hex[3:5], 16)
+        b = int(color_hex[5:7], 16)
+        fill_color = f"rgba({r},{g},{b},0.3)"
+        
+        fig_comp.add_trace(go.Scatterpolar(
+            r=data['values'] + data['values'][:1],
+            theta=feature_labels + feature_labels[:1],
+            fill='toself',
+            fillcolor=fill_color,
+            line=dict(color=color_hex, width=3),
+            name=f"Cluster {c_id}"
+        ))
+        
+    fig_comp.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], showticklabels=False)
+        ),
+        showlegend=True,
+        legend=dict(orientation="h", y=-0.1),
+        height=500,
+        margin=dict(l=40, r=40, t=30, b=40)
+    )
+    st.plotly_chart(fig_comp, use_container_width=True)
