@@ -969,3 +969,36 @@ with col_alt_2:
         margin=dict(l=40, r=40, t=30, b=40)
     )
     st.plotly_chart(fig_comp, use_container_width=True)
+
+st.header("🧬 Multi-Dimensional Cluster Profiles")
+st.markdown("This plot shows how each player (line) scores across every metric. Follow the colors to see the 'signature' of each cluster.")
+
+# 1. Prepare the features for the plot
+# We include the cluster column so we can color-code the lines
+parallel_features = ['X_avg', 'Y_std', 'xG_avg', 'Head_percent', 'Openplay_percent', 'shot_share', 'avgxGoverperformance', 'cluster']
+
+# 2. Create the Parallel Coordinates Plot
+fig_parallel = px.parallel_coordinates(
+    df_player,
+    dimensions=parallel_features,
+    color="cluster",
+    color_continuous_scale=px.colors.sequential.Viridis, # Match your t-SNE and Radar colors
+    labels={
+        "X_avg": "Proximity",
+        "Y_std": "Range",
+        "xG_avg": "Quality",
+        "Head_percent": "Headers",
+        "Openplay_percent": "Open Play",
+        "shot_share": "Talisman",
+        "avgxGoverperformance": "Clinical",
+        "cluster": "Cluster ID"
+    }
+)
+
+# 3. Adjust the layout for better readability
+fig_parallel.update_layout(
+    height=600,
+    margin=dict(l=50, r=50, t=50, b=50)
+)
+
+st.plotly_chart(fig_parallel, use_container_width=True)
