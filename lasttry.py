@@ -469,7 +469,7 @@ with col_radar:
                 theta=feature_labels + feature_labels[:1],
                 fill='toself',
                 fillcolor=cluster_data['color'],
-                line=dict(color=cluster_data['color'], width=2),
+                line=dict(color=cluster_data['black'] , width=2),
                 opacity=0.5,
                 name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
             ))
