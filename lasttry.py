@@ -26,6 +26,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# =============================================================================
+# GLOBAL CLUSTER COLOR MAPPING (Consistent across all visualizations)
+# =============================================================================
+# Define colors for clusters 0-12 (supports K up to 13)
+CLUSTER_COLOR_MAP = {
+    0: '#8DD3C7',   # Teal
+    1: '#FFFFB3',   # Light Yellow
+    2: '#BEBADA',   # Lavender
+    3: '#FB8072',   # Salmon
+    4: '#80B1D3',   # Light Blue
+    5: '#FDB462',   # Orange
+    6: '#B3DE69',   # Light Green
+    7: '#FCCDE5',   # Pink
+    8: '#D9D9D9',   # Gray
+    9: '#BC80BD',   # Purple
+    10: '#CCEBC5',  # Mint
+    11: '#FFED6F',  # Yellow
+    12: '#E78AC3'   # Rose
+}
+
+# Helper function to get consistent colors
+def get_cluster_color(cluster_num):
+    """Get consistent color for a cluster number"""
+    return CLUSTER_COLOR_MAP.get(cluster_num, '#8DD3C7')  # Default to first color if out of range
+
 # Custom CSS
 st.markdown("""
 <style>
@@ -252,8 +277,8 @@ st.header("🎯 Results Overview")
 st.markdown("### Player Style Clusters - Key Findings")
 
 # Color palette
-cluster_colors_list = px.colors.qualitative.Set2[:CHOSEN_K]
-cluster_colors = {i: cluster_colors_list[i] for i in range(CHOSEN_K)}
+# Use consistent cluster colors
+cluster_colors = {i: get_cluster_color(i) for i in range(CHOSEN_K)}
 
 # Famous players to label
 famous_players = [
@@ -372,7 +397,6 @@ for feature in radar_features:
 
 # Calculate cluster averages
 cluster_averages = []
-cluster_colors_radar = plt.cm.Set3(np.linspace(0, 1, CHOSEN_K))
 
 for cluster_num in range(CHOSEN_K):
     cluster_mask = df_player['cluster'] == cluster_num
@@ -393,7 +417,7 @@ for cluster_num in range(CHOSEN_K):
             'cluster': cluster_num,
             'size': cluster_size,
             'values': avg_values,
-            'color': cluster_colors_radar[cluster_num]
+            'color': get_cluster_color(cluster_num)  # Use consistent color mapping
         })
 
 # Display radar charts in grid
@@ -416,8 +440,9 @@ for row in range(rows_needed):
                     r=cluster_data['values'] + cluster_data['values'][:1],  # Close the polygon
                     theta=feature_labels + feature_labels[:1],
                     fill='toself',
-                    fillcolor=f'rgba({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)},0.3)',
-                    line_color=f'rgb({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)})',
+                    fillcolor=cluster_data['color'],  # Use hex color with opacity in layout
+                    line_color=cluster_data['color'],
+                    opacity=0.3,  # Set fill opacity
                     name=f'Cluster {cluster_data["cluster"]}'
                 ))
                 
@@ -568,14 +593,13 @@ with st.expander("📈 Alternative Visualizations", expanded=False):
     st.markdown("#### PCA Projection")
     
     fig_pca, ax = plt.subplots(figsize=(12, 8))
-    colors_pca = plt.cm.viridis(np.linspace(0, 1, CHOSEN_K))
     
     for i in range(CHOSEN_K):
         mask = (df_player['cluster'] == i)
         ax.scatter(df_player[mask]['pca_1'], 
                   df_player[mask]['pca_2'],
                   label=f'Cluster {i}',
-                  color=colors_pca[i],
+                  color=get_cluster_color(i),  # Use consistent color mapping
                   alpha=0.6,
                   s=30)
     
