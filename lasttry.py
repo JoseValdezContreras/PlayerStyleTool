@@ -386,131 +386,251 @@ with col_tsne:
     """)
 
 # Right column: Interactive Radar Charts
+
 with col_radar:
+
     st.markdown("**Cluster Average Profiles**")
+
     st.markdown("*Select a player from the dropdown or hover on the map*")
+
     
+
     # Dropdown to select player for comparison
+
     selected_player = st.selectbox(
+
         "Choose a player:",
+
         ['-- Cluster Averages Only --'] + sorted(df_player['player'].tolist()),
+
         key='radar_player_select'
+
     )
+
     
+
     # Calculate radar features and normalize
+
     radar_features = [
+
         'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
+
         'Openplay_percent', 'shot_share',
+
         'avgxGoverperformance', 'DirectFreekick_percent'
+
     ]
+
     
+
     feature_labels = [
+
         'Chance\nQuality', 'Goal\nProximity', 'Movement\nRange',
+
         'Headers', 'Open\nPlay', 'Talisman', 'Clinical', 'Set Piece\nTaker'
+
     ]
+
     
+
     # Normalize
+
     radar_normalized = pd.DataFrame()
+
     for feature in radar_features:
+
         if feature in df_player.columns:
+
             radar_normalized[feature] = normalize_for_radar(df_player[feature])
+
         else:
+
             radar_normalized[feature] = 0.5
+
     radar_normalized.index = df_player.index
+
     
+
     # Calculate cluster averages
+
     cluster_averages = {}
+
     for cluster_num in range(CHOSEN_K):
+
         cluster_mask = df_player['cluster'] == cluster_num
+
         cluster_size = sum(cluster_mask)
+
         
+
         if cluster_size > 0:
+
             avg_values = []
+
             for feature in radar_features:
+
                 cluster_feature_vals = radar_normalized[cluster_mask][feature]
+
                 avg_values.append(cluster_feature_vals.mean())
+
             
+
             cluster_averages[cluster_num] = {
+
                 'values': avg_values,
+
                 'size': cluster_size,
+
                 'color': get_cluster_color(cluster_num)
+
             }
+
     
+
     # Create the radar chart
+
     fig_radar_interactive = go.Figure()
+
     
+
     if selected_player != '-- Cluster Averages Only --':
+
         # Show selected player vs their cluster average
+
         player_idx = df_player[df_player['player'] == selected_player].index[0]
+
         player_cluster = df_player.loc[player_idx, 'cluster']
+
         player_values = [radar_normalized.loc[player_idx, feature] for feature in radar_features]
+
         
+
         # Add cluster average (semi-transparent)
+
         cluster_avg = cluster_averages[player_cluster]
+
         fig_radar_interactive.add_trace(go.Scatterpolar(
+
             r=cluster_avg['values'] + cluster_avg['values'][:1],
+
             theta=feature_labels + feature_labels[:1],
+
             fill='toself',
+
             fillcolor=cluster_avg['color'],
+
             line=dict(color=cluster_avg['color'], width=2),
+
             opacity=0.4,
+
             name=f'Cluster {player_cluster} Average'
+
         ))
+
         
+
         # Add player (bold, contrasting color)
+
         fig_radar_interactive.add_trace(go.Scatterpolar(
+
             r=player_values + player_values[:1],
+
             theta=feature_labels + feature_labels[:1],
+
             fill='toself',
+
             fillcolor='rgba(255, 0, 127, 0.3)',  # Hot pink - contrasts with all cluster colors
+
             line=dict(color='#FF007F', width=3),
+
             name=selected_player
+
         ))
+
         
+
         title_text = f'<b>{selected_player}</b><br><sub>vs Cluster {player_cluster} Average</sub>'
+
     else:
+
         # Show all cluster averages
+
         for cluster_num, cluster_data in cluster_averages.items():
-            base_color= cluster_data['color']
-            
+
             fig_radar_interactive.add_trace(go.Scatterpolar(
+
                 r=cluster_data['values'] + cluster_data['values'][:1],
+
                 theta=feature_labels + feature_labels[:1],
+
                 fill='toself',
-                fillcolor=base_color.replace('rgb','rgba').replace(')',',.2)',
-                line=dict(color=base_color, width=2),
-                opacity=1.0,
+
+                fillcolor=cluster_data['color'],
+
+                line=dict(color=cluster_data['color'], width=2),
+
+                opacity=0.5,
+
                 name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
-            )))
+
+            ))
+
         
+
         title_text = '<b>All Cluster Averages</b><br><sub>Select a player to compare</sub>'
+
     
+
     fig_radar_interactive.update_layout(
+
         polar=dict(
+
             radialaxis=dict(
+
                 visible=True,
+
                 range=[0, 1],
+
                 tickvals=[0.2, 0.4, 0.6, 0.8, 1.0],
+
                 ticktext=['20', '40', '60', '80', '100'],
+
                 showticklabels=True
+
             )
+
         ),
+
         title=dict(text=title_text, font=dict(size=14)),
+
         showlegend=True,
+
         legend=dict(
+
             yanchor="bottom",
+
             y=0.01,
+
             xanchor="left",
+
             x=0.01,
+
             font=dict(size=10)
+
         ),
+
         height=700,
+
         margin=dict(l=10, r=10, t=80, b=10)
+
     )
+
     
+
     st.plotly_chart(fig_radar_interactive, use_container_width=True)
 
-st.markdown("---")
+
+st.markdown("---") 
 
 # ---------- DETAILED CLUSTER RADAR CHARTS (Grid below) ----------
 st.markdown("#### 📊 Detailed Cluster Style Profiles")
