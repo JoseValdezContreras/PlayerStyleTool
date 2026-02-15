@@ -292,7 +292,7 @@ if df is not None:
     # List of famous players to label
     famous_players = [
         'Erling Haaland', 'Neymar', 'Lionel Messi', 'Cristiano Ronaldo', 
-        'Robert Lewandowski', 'Kylian Mbappé', 'Sergio Ramos',
+        'Robert Lewandowski', 'Kylian Mbappe-Lottin', 'Paulo Dybala', 'Bruno Fernandes', 'Marcelo', 'Toni Kroos', 'Ousmane Dembélé', 'Memphis Depay', 'Son Heung-Min', 'Kevin De Bruyne', 'Sergio Ramos',
         'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah',
         'Zlatan Ibrahimovic', 'Gareth Bale', 'Thomas Müller', 'Eden Hazard'
     ]
