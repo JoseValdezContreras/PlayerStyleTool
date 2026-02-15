@@ -302,100 +302,216 @@ for cluster_num in range(CHOSEN_K):
     if rep:
         players_to_label.add(rep)
 
-# ---------- t-SNE VISUALIZATION ----------
-st.markdown("#### 🗺️ Cluster Map: Player Similarity Space")
+# ---------- SIDE-BY-SIDE: t-SNE MAP AND CLUSTER RADARS ----------
+st.markdown("#### 🗺️ Interactive Cluster Analysis")
 
-fig_tsne = go.Figure()
+# Create two columns for side-by-side display
+col_tsne, col_radar = st.columns([1.2, 1])
 
-for cluster_num in range(CHOSEN_K):
-    cluster_df = df_player[df_player['cluster'] == cluster_num]
-    labeled_mask = cluster_df['player'].isin(players_to_label)
+# Left column: t-SNE Map
+with col_tsne:
+    st.markdown("**Cluster Map: Player Similarity Space**")
     
-    # Unlabeled players
-    unlabeled_df = cluster_df[~labeled_mask]
-    if len(unlabeled_df) > 0:
-        fig_tsne.add_trace(go.Scatter(
-            x=unlabeled_df['tsne_x'],
-            y=unlabeled_df['tsne_y'],
-            mode='markers',
-            name=f'Cluster {cluster_num}',
-            marker=dict(
-                size=6,
-                color=cluster_colors[cluster_num],
-                opacity=0.5,
-                line=dict(width=0.5, color='white')
-            ),
-            text=unlabeled_df['player'],
-            hovertemplate='<b>%{text}</b><br>Cluster: ' + str(cluster_num) + '<extra></extra>',
-            showlegend=True
-        ))
+    fig_tsne = go.Figure()
     
-    # Labeled players
-    labeled_df = cluster_df[labeled_mask]
-    if len(labeled_df) > 0:
-        fig_tsne.add_trace(go.Scatter(
-            x=labeled_df['tsne_x'],
-            y=labeled_df['tsne_y'],
-            mode='markers+text',
-            marker=dict(
-                size=10,
-                color=cluster_colors[cluster_num],
-                symbol='star',
-                opacity=0.9,
-                line=dict(width=1.5, color='black')
-            ),
-            text=labeled_df['player'],
-            textposition='top center',
-            textfont=dict(size=9, color='black'),
-            hovertemplate='<b>%{text}</b><br>Cluster: ' + str(cluster_num) + '<extra></extra>',
-            showlegend=False
+    for cluster_num in range(CHOSEN_K):
+        cluster_df = df_player[df_player['cluster'] == cluster_num]
+        labeled_mask = cluster_df['player'].isin(players_to_label)
+        
+        # Unlabeled players
+        unlabeled_df = cluster_df[~labeled_mask]
+        if len(unlabeled_df) > 0:
+            fig_tsne.add_trace(go.Scatter(
+                x=unlabeled_df['tsne_x'],
+                y=unlabeled_df['tsne_y'],
+                mode='markers',
+                name=f'Cluster {cluster_num}',
+                marker=dict(
+                    size=6,
+                    color=cluster_colors[cluster_num],
+                    opacity=0.5,
+                    line=dict(width=0.5, color='white')
+                ),
+                text=unlabeled_df['player'],
+                customdata=unlabeled_df['player'],
+                hovertemplate='<b>%{text}</b><br>Cluster: ' + str(cluster_num) + '<extra></extra>',
+                showlegend=True
+            ))
+        
+        # Labeled players
+        labeled_df = cluster_df[labeled_mask]
+        if len(labeled_df) > 0:
+            fig_tsne.add_trace(go.Scatter(
+                x=labeled_df['tsne_x'],
+                y=labeled_df['tsne_y'],
+                mode='markers+text',
+                marker=dict(
+                    size=10,
+                    color=cluster_colors[cluster_num],
+                    symbol='star',
+                    opacity=0.9,
+                    line=dict(width=1.5, color='black')
+                ),
+                text=labeled_df['player'],
+                textposition='top center',
+                textfont=dict(size=9, color='black'),
+                customdata=labeled_df['player'],
+                hovertemplate='<b>%{text}</b><br>Cluster: ' + str(cluster_num) + '<extra></extra>',
+                showlegend=False
+            ))
+    
+    fig_tsne.update_layout(
+        title=dict(
+            text='<b>Player Style Clusters</b><br><sub>Hover over players to see their radar chart →</sub>',
+            font=dict(size=16)
+        ),
+        xaxis_title='t-SNE Dimension 1',
+        yaxis_title='t-SNE Dimension 2',
+        height=700,
+        hovermode='closest',
+        legend=dict(title='Clusters', yanchor="top", y=0.99, xanchor="left", x=0.01),
+        margin=dict(l=10, r=10, t=80, b=10)
+    )
+    
+    st.plotly_chart(fig_tsne, use_container_width=True)
+    
+    st.markdown("""
+    **Understanding the Map:**
+    - Each point is a player, colored by their cluster
+    - ⭐ Stars indicate famous players
+    - Hover to compare with cluster average →
+    """)
+
+# Right column: Interactive Radar Charts
+with col_radar:
+    st.markdown("**Cluster Average Profiles**")
+    st.markdown("*Select a player from the dropdown or hover on the map*")
+    
+    # Dropdown to select player for comparison
+    selected_player = st.selectbox(
+        "Choose a player:",
+        ['-- Cluster Averages Only --'] + sorted(df_player['player'].tolist()),
+        key='radar_player_select'
+    )
+    
+    # Calculate radar features and normalize
+    radar_features = [
+        'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
+        'Openplay_percent', 'shot_share',
+        'avgxGoverperformance', 'DirectFreekick_percent'
+    ]
+    
+    feature_labels = [
+        'Chance\nQuality', 'Goal\nProximity', 'Movement\nRange',
+        'Headers', 'Open\nPlay', 'Talisman', 'Clinical', 'Set Piece\nTaker'
+    ]
+    
+    # Normalize
+    radar_normalized = pd.DataFrame()
+    for feature in radar_features:
+        if feature in df_player.columns:
+            radar_normalized[feature] = normalize_for_radar(df_player[feature])
+        else:
+            radar_normalized[feature] = 0.5
+    radar_normalized.index = df_player.index
+    
+    # Calculate cluster averages
+    cluster_averages = {}
+    for cluster_num in range(CHOSEN_K):
+        cluster_mask = df_player['cluster'] == cluster_num
+        cluster_size = sum(cluster_mask)
+        
+        if cluster_size > 0:
+            avg_values = []
+            for feature in radar_features:
+                cluster_feature_vals = radar_normalized[cluster_mask][feature]
+                avg_values.append(cluster_feature_vals.mean())
+            
+            cluster_averages[cluster_num] = {
+                'values': avg_values,
+                'size': cluster_size,
+                'color': get_cluster_color(cluster_num)
+            }
+    
+    # Create the radar chart
+    fig_radar_interactive = go.Figure()
+    
+    if selected_player != '-- Cluster Averages Only --':
+        # Show selected player vs their cluster average
+        player_idx = df_player[df_player['player'] == selected_player].index[0]
+        player_cluster = df_player.loc[player_idx, 'cluster']
+        player_values = [radar_normalized.loc[player_idx, feature] for feature in radar_features]
+        
+        # Add cluster average (semi-transparent)
+        cluster_avg = cluster_averages[player_cluster]
+        fig_radar_interactive.add_trace(go.Scatterpolar(
+            r=cluster_avg['values'] + cluster_avg['values'][:1],
+            theta=feature_labels + feature_labels[:1],
+            fill='toself',
+            fillcolor=cluster_avg['color'],
+            line=dict(color=cluster_avg['color'], width=2),
+            opacity=0.4,
+            name=f'Cluster {player_cluster} Average'
         ))
-
-fig_tsne.update_layout(
-    title=dict(
-        text='<b>Player Style Clusters</b><br><sub>Famous players and cluster representatives labeled</sub>',
-        font=dict(size=18)
-    ),
-    xaxis_title='t-SNE Dimension 1',
-    yaxis_title='t-SNE Dimension 2',
-    height=700,
-    hovermode='closest',
-    legend=dict(title='Clusters', yanchor="top", y=0.99, xanchor="left", x=0.01)
-)
-
-st.plotly_chart(fig_tsne, use_container_width=True)
-
-st.markdown("""
-**Understanding the Map:**
-- Each point is a player, colored by their cluster
-- ⭐ Stars indicate famous players or cluster representatives
-- Players close together have similar playing styles
-""")
-
-# ---------- CLUSTER RADAR CHARTS ----------
-st.markdown("#### 📊 Cluster Style Profiles")
-st.markdown("Radar charts showing the average style profile for each cluster:")
-
-radar_features = [
-    'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
-    'Openplay_percent', 'shot_share',
-    'avgxGoverperformance', 'DirectFreekick_percent'
-]
-
-feature_labels = [
-    'Chance\nQuality', 'Goal\nProximity', 'Movement\nRange',
-    'Headers', 'Open\nPlay', 'Talisman', 'Clinical', 'Set Piece\nTaker'
-]
-
-# Normalize and calculate cluster averages
-radar_normalized = pd.DataFrame()
-for feature in radar_features:
-    if feature in df_player.columns:
-        radar_normalized[feature] = normalize_for_radar(df_player[feature])
+        
+        # Add player (bold, contrasting color)
+        fig_radar_interactive.add_trace(go.Scatterpolar(
+            r=player_values + player_values[:1],
+            theta=feature_labels + feature_labels[:1],
+            fill='toself',
+            fillcolor='rgba(255, 0, 127, 0.3)',  # Hot pink - contrasts with all cluster colors
+            line=dict(color='#FF007F', width=3),
+            name=selected_player
+        ))
+        
+        title_text = f'<b>{selected_player}</b><br><sub>vs Cluster {player_cluster} Average</sub>'
     else:
-        radar_normalized[feature] = 0.5
+        # Show all cluster averages
+        for cluster_num, cluster_data in cluster_averages.items():
+            fig_radar_interactive.add_trace(go.Scatterpolar(
+                r=cluster_data['values'] + cluster_data['values'][:1],
+                theta=feature_labels + feature_labels[:1],
+                fill='toself',
+                fillcolor=cluster_data['color'],
+                line=dict(color=cluster_data['color'], width=2),
+                opacity=0.5,
+                name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
+            ))
+        
+        title_text = '<b>All Cluster Averages</b><br><sub>Select a player to compare</sub>'
+    
+    fig_radar_interactive.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1],
+                tickvals=[0.2, 0.4, 0.6, 0.8, 1.0],
+                ticktext=['20', '40', '60', '80', '100'],
+                showticklabels=True
+            )
+        ),
+        title=dict(text=title_text, font=dict(size=14)),
+        showlegend=True,
+        legend=dict(
+            yanchor="bottom",
+            y=0.01,
+            xanchor="left",
+            x=0.01,
+            font=dict(size=10)
+        ),
+        height=700,
+        margin=dict(l=10, r=10, t=80, b=10)
+    )
+    
+    st.plotly_chart(fig_radar_interactive, use_container_width=True)
 
-# Calculate cluster averages
+st.markdown("---")
+
+# ---------- DETAILED CLUSTER RADAR CHARTS (Grid below) ----------
+st.markdown("#### 📊 Detailed Cluster Style Profiles")
+st.markdown("Average characteristics of each playing style:")
+
+# Calculate cluster averages for grid (reusing normalized data from above)
 cluster_averages = []
 
 for cluster_num in range(CHOSEN_K):
@@ -417,7 +533,7 @@ for cluster_num in range(CHOSEN_K):
             'cluster': cluster_num,
             'size': cluster_size,
             'values': avg_values,
-            'color': get_cluster_color(cluster_num)  # Use consistent color mapping
+            'color': get_cluster_color(cluster_num)
         })
 
 # Display radar charts in grid
