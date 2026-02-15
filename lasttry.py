@@ -445,7 +445,7 @@ with col_radar:
             fill='toself',
             fillcolor=cluster_avg['color'],
             line=dict(color=cluster_avg['color'], width=2),
-            opacity=1.0,
+            opacity=0.4,
             name=f'Cluster {player_cluster} Average'
         ))
 
@@ -550,7 +550,7 @@ for row in range(rows_needed):
                     fill='toself',
                     fillcolor=cluster_data['color'],  # Use hex color with opacity in layout
                     line_color=cluster_data['color'],
-                    opacity=0.3,  # Set fill opacity
+                    opacity=1.0,  # Set fill opacity
                     name=f'Cluster {cluster_data["cluster"]}'
                 ))
                 
