@@ -1010,11 +1010,9 @@ st.markdown("---")
 st.header("🧪 Experimental: Clearer Visualizations")
 st.markdown("Since 8 clusters can be messy in a single radar chart, here are two cleaner ways to compare them.")
 
-col_alt_1, col_alt_2 = st.columns([1, 1])
 
 
 # --- OPTION 2: THE SELECTIVE RADAR (Best for direct comparison) ---
-with col_alt_2:
     st.subheader("2. Cluster Comparator")
     st.markdown("Select specific clusters to overlay (instead of all 8).")
     
