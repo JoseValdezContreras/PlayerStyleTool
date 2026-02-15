@@ -4,7 +4,6 @@ Created on Fri Feb  6 21:08:27 2026
 
 @author: josev
 """
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -258,13 +257,11 @@ cluster_colors = {i: cluster_colors_list[i] for i in range(CHOSEN_K)}
 
 # Famous players to label
 famous_players = [
-        'Erling Haaland', 'Neymar', 'Lionel Messi', 'Cristiano Ronaldo', 'Robert Lewandowski', 'Kylian Mbappe-Lottin', 'Antoinne Griezmann', 'Paulo Dybala', 'Bruno Fernandes',
-        'Marcelo', 'Toni Kroos', 'Ousmane Dembélé', 'Memphis Depay', 'Son Heung-Min', 'Kevin De Bruyne', 'Sergio Ramos', 'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah',
-        'Zlatan Ibrahimovic', 'Gareth Bale', 'Thomas Müller', 'Eden Hazard', 'Gavi', 'Jude Bellingham', 'Eduardo Camavinga', 'Aurelien Tchouameni', 'Jamal Musiala', 'Josko Gvardiol',
-        'William Saliba', 'Nuno Mendes', 'Nico Williams', 'Robert Lewandowski', 'Kylian Mbappe-Lottin', 'Antoinne Griezmann', 'Paulo Dybala', 'Bruno Fernandes', 'Marcelo', 'Toni Kroos', 
-        'Ousmane Dembélé', 'Memphis Depay', 'Son Heung-Min', 'Kevin De Bruyne', 'Sergio Ramos', 'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah', 'Zlatan Ibrahimovic', 
-        'Gareth Bale', 'Thomas Müller', 'Eden Hazard', 'Gavi', 'Jude Bellingham', 'Eduardo Camavinga', 'Aurelien Tchouameni', 'Jamal Musiala', 'Josko Gvardiol', 'William Saliba', 'Nuno Mendes', 'Nico Williams'
-    ]
+    'Erling Haaland', 'Neymar', 'Lionel Messi', 'Cristiano Ronaldo', 
+    'Robert Lewandowski', 'Kylian Mbappé', 'Sergio Ramos',
+    'Karim Benzema', 'Luis Suárez', 'Harry Kane', 'Mohamed Salah',
+    'Zlatan Ibrahimovic', 'Gareth Bale', 'Thomas Müller', 'Eden Hazard'
+]
 
 # Get players to label
 players_to_label = set()
@@ -349,79 +346,99 @@ st.markdown("""
 
 # ---------- CLUSTER RADAR CHARTS ----------
 st.markdown("#### 📊 Cluster Style Profiles")
+st.markdown("Radar charts showing the average style profile for each cluster:")
 
- # Calculate cluster averages
+radar_features = [
+    'xG_avg', 'X_avg', 'Y_std', 'Head_percent',
+    'Openplay_percent', 'shot_share',
+    'avgxGoverperformance', 'DirectFreekick_percent'
+]
+
+feature_labels = [
+    'Chance\nQuality', 'Goal\nProximity', 'Movement\nRange',
+    'Headers', 'Open\nPlay', 'Talisman', 'Clinical', 'Set Piece\nTaker'
+]
+
+# Normalize and calculate cluster averages
+radar_normalized = pd.DataFrame()
+for feature in radar_features:
+    if feature in df_player.columns:
+        radar_normalized[feature] = normalize_for_radar(df_player[feature])
+    else:
+        radar_normalized[feature] = 0.5
+
+# Calculate cluster averages
 cluster_averages = []
-cluster_colors = plt.cm.Set3(np.linspace(0, 1, CHOSEN_K))
-    
+cluster_colors_radar = plt.cm.Set3(np.linspace(0, 1, CHOSEN_K))
+
 for cluster_num in range(CHOSEN_K):
     cluster_mask = df_player['cluster'] == cluster_num
     cluster_size = sum(cluster_mask)
-        
+    
     if cluster_size > 0:
-            # Get average values for this cluster
-            avg_values = []
-            for feature in radar_features:
-                if feature in df_player.columns:
-                    # Get average of normalized values
-                    cluster_feature_vals = radar_normalized[cluster_mask][feature]
-                    avg_values.append(cluster_feature_vals.mean())
-                else:
-                    avg_values.append(0.5)
-            
-            cluster_averages.append({
-                'cluster': cluster_num,
-                'size': cluster_size,
-                'values': avg_values,
-                'color': cluster_colors[cluster_num]
-            })
-    
-    # Create radar charts in columns
-    cols_per_row = 3
-    rows_needed = (CHOSEN_K + cols_per_row - 1) // cols_per_row
-    
-    for row in range(rows_needed):
-        cols = st.columns(cols_per_row)
-        for col_idx in range(cols_per_row):
-            cluster_idx = row * cols_per_row + col_idx
-            if cluster_idx < len(cluster_averages):
-                with cols[col_idx]:
-                    cluster_data = cluster_averages[cluster_idx]
-                    
-                    # Create radar chart
-                    fig = go.Figure()
-                    
-                    # Add radar trace
-                    fig.add_trace(go.Scatterpolar(
-                        r=cluster_data['values'] + cluster_data['values'][:1],  # Close the polygon
-                        theta=feature_labels + feature_labels[:1],
-                        fill='toself',
-                        fillcolor=f'rgba({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)},0.3)',
-                        line_color=f'rgb({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)})',
-                        name=f'Cluster {cluster_data["cluster"]}'
-                    ))
-                    
-                    # Update layout
-                    fig.update_layout(
-                        polar=dict(
-                            radialaxis=dict(
-                                visible=True,
-                                range=[0, 1],
-                                tickvals=[0, 0.25, 0.5, 0.75, 1],
-                                ticktext=["0%", "25%", "50%", "75%", "100%"]
-                            ),
-                            angularaxis=dict(
-                                direction="clockwise"
-                            )
+        # Get average values for this cluster
+        avg_values = []
+        for feature in radar_features:
+            if feature in df_player.columns:
+                # Get average of normalized values
+                cluster_feature_vals = radar_normalized[cluster_mask][feature]
+                avg_values.append(cluster_feature_vals.mean())
+            else:
+                avg_values.append(0.5)
+        
+        cluster_averages.append({
+            'cluster': cluster_num,
+            'size': cluster_size,
+            'values': avg_values,
+            'color': cluster_colors_radar[cluster_num]
+        })
+
+# Display radar charts in grid
+cols_per_row = 3
+rows_needed = (CHOSEN_K + cols_per_row - 1) // cols_per_row
+
+for row in range(rows_needed):
+    cols = st.columns(cols_per_row)
+    for col_idx in range(cols_per_row):
+        cluster_idx = row * cols_per_row + col_idx
+        if cluster_idx < len(cluster_averages):
+            with cols[col_idx]:
+                cluster_data = cluster_averages[cluster_idx]
+                
+                # Create radar chart
+                fig_radar = go.Figure()
+                
+                # Add radar trace
+                fig_radar.add_trace(go.Scatterpolar(
+                    r=cluster_data['values'] + cluster_data['values'][:1],  # Close the polygon
+                    theta=feature_labels + feature_labels[:1],
+                    fill='toself',
+                    fillcolor=f'rgba({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)},0.3)',
+                    line_color=f'rgb({int(cluster_data["color"][0]*255)},{int(cluster_data["color"][1]*255)},{int(cluster_data["color"][2]*255)})',
+                    name=f'Cluster {cluster_data["cluster"]}'
+                ))
+                
+                # Update layout
+                fig_radar.update_layout(
+                    polar=dict(
+                        radialaxis=dict(
+                            visible=True,
+                            range=[0, 1],
+                            tickvals=[0, 0.25, 0.5, 0.75, 1],
+                            ticktext=["0%", "25%", "50%", "75%", "100%"]
                         ),
-                        title=f"Cluster {cluster_data['cluster']}<br><span style='font-size:12px'>{cluster_data['size']} players</span>",
-                        showlegend=False,
-                        height=350,
-                        margin=dict(l=50, r=50, t=80, b=50)
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-    
+                        angularaxis=dict(
+                            direction="clockwise"
+                        )
+                    ),
+                    title=f"Cluster {cluster_data['cluster']}<br><span style='font-size:12px'>{cluster_data['size']} players</span>",
+                    showlegend=False,
+                    height=350,
+                    margin=dict(l=50, r=50, t=80, b=50)
+                )
+                
+                st.plotly_chart(fig_radar, use_container_width=True)
+
 with st.expander("📊 How to Read These Charts"):
     st.markdown("""
     **Feature Explanations:**
@@ -716,4 +733,3 @@ st.markdown("""
 **Data Science Portfolio Project** | Football Player Style Clustering  
 *Built with Python, Scikit-learn, and Streamlit*
 """)
-
