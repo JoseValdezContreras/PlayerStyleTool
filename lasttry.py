@@ -296,22 +296,22 @@ if df is not None:
         cluster_df = df[df['cluster'] == cluster_num].copy()
         
         # Calculate distance from cluster center
-        center_x = cluster_df['tsne_x'].mean()
-        center_y = cluster_df['tsne_y'].mean()
-        cluster_df['dist_from_center'] = np.sqrt(
+    center_x = cluster_df['tsne_x'].mean()
+    center_y = cluster_df['tsne_y'].mean()
+    cluster_df['dist_from_center'] = np.sqrt(
             (cluster_df['tsne_x'] - center_x)**2 + 
             (cluster_df['tsne_y'] - center_y)**2
         )
         
-        # Filter for relatively famous players (high shots)
-        famous_in_cluster = cluster_df[cluster_df['total_shots'] >= min_shots]
+    # Filter for relatively famous players (high shots)
+    famous_in_cluster = cluster_df[cluster_df['total_shots'] >= min_shots]
         
         if len(famous_in_cluster) == 0:
             # Fall back to any player if no one is famous enough
             famous_in_cluster = cluster_df
         
-        # Find player closest to center among famous players
-        representative = famous_in_cluster.nsmallest(1, 'dist_from_center')
+    # Find player closest to center among famous players
+    representative = famous_in_cluster.nsmallest(1, 'dist_from_center')
         
         return representative['player'].values[0] if len(representative) > 0 else None
     
