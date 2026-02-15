@@ -1003,49 +1003,52 @@ fig_parallel.update_layout(
 
 st.plotly_chart(fig_parallel, use_container_width=True)
 
-st.header("🎯 Player Style Deviation (Z-Scores)")
-st.markdown("This chart shows how a player compares to the average. **0** is the average player; **+2** means they are in the top ~2% for that stat.")
+st.header("📊 Cluster Signatures (Z-Score Deviations)")
+st.markdown("This chart shows how the **entire cluster** differs from the average player profile. Bars represent Standard Deviations from the mean.")
 
-# 1. Select a player to analyze
-target_player = st.selectbox("Select Player for Z-Score Analysis:", df_player['player'].sort_values(), key="zscore_select")
+# 1. Select the cluster to analyze
+target_cluster = st.selectbox("Select Cluster to See Signature:", options=sorted(df_player['cluster'].unique()), key="cluster_z_select")
 
-# 2. Calculate Z-Scores for the features
-# Formula: (Value - Mean) / Standard Deviation
-features_to_plot = ['xG_avg', 'X_avg', 'Y_std', 'Head_percent', 'shot_share', 'avgxGoverperformance']
-labels = ['Quality', 'Proximity', 'Range', 'Headers', 'Talisman', 'Finishing']
+# 2. Setup Features
+z_features = ['xG_avg', 'X_avg', 'Y_std', 'Head_percent', 'shot_share', 'avgxGoverperformance']
+z_labels = ['Chance Quality', 'Goal Proximity', 'Movement Range', 'Headers', 'Talisman Share', 'Clinical Finishing']
 
-player_data = df_player[df_player['player'] == target_player][features_to_plot]
-mean_vals = df_player[features_to_plot].mean()
-std_vals = df_player[features_to_plot].std()
+# 3. Calculate Population Stats
+pop_mean = df_player[z_features].mean()
+pop_std = df_player[z_features].std()
 
-z_scores = (player_data - mean_vals) / std_vals
-z_scores_list = z_scores.values.flatten()
+# 4. Calculate Cluster Average and its Z-Score
+cluster_avg = df_player[df_player['cluster'] == target_cluster][z_features].mean()
+cluster_z_scores = (cluster_avg - pop_mean) / pop_std
 
-# 3. Create the Deviation Bar Chart
-deviation_df = pd.DataFrame({
-    'Metric': labels,
-    'Z-Score': z_scores_list,
-    'Color': ['Above Average' if x > 0 else 'Below Average' for x in z_scores_list]
+# 5. Prepare DataFrame for Plotly
+cluster_z_df = pd.DataFrame({
+    'Metric': z_labels,
+    'Z-Score': cluster_z_scores.values,
+    'Color': ['Positive' if x > 0 else 'Negative' for x in cluster_z_scores]
 })
 
-fig_z = px.bar(
-    deviation_df,
+# 6. Create the Plot
+fig_cluster_z = px.bar(
+    cluster_z_df,
     x='Z-Score',
     y='Metric',
     orientation='h',
     color='Color',
-    color_discrete_map={'Above Average': '#00e676', 'Below Average': '#ff5252'},
-    text_auto='.2f'
+    color_discrete_map={'Positive': '#00e676', 'Negative': '#ff5252'}, # Green and Red
+    text_auto='.2f',
+    title=f"Signature of Cluster {target_cluster}"
 )
 
-# Add a vertical line at 0 (the average)
-fig_z.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.5)
+# Add a vertical zero line for the "Average Player"
+fig_cluster_z.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.7)
 
-fig_z.update_layout(
-    xaxis_title="Standard Deviations from Mean",
-    yaxis_title="",
+# Adjust range to make it consistent (e.g., -2 to +2 standard deviations)
+fig_cluster_z.update_layout(
+    xaxis=dict(range=[-2.5, 2.5]),
     showlegend=False,
-    height=400
+    height=400,
+    margin=dict(l=20, r=20, t=50, b=20)
 )
 
-st.plotly_chart(fig_z, use_container_width=True)
+st.plotly_chart(fig_cluster_z, use_container_width=True)
