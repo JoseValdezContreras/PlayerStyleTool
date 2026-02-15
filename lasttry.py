@@ -472,14 +472,9 @@ with col_radar:
                 line=dict(color='#424242' , width=3),
                 opacity=0.5,
                 name=f'Cluster {cluster_num} ({cluster_data["size"]} players)'
-            ))
+            
             #hover
             hoveron='fills'
-            hovertemplate=(
-                f"<b>{cluster_name}</b><br>" +
-                "Value: %{r:.2f}<br>" +
-                "<extra></extra>" # Removes the 'trace name' box from the side
-            )
         ))    
         title_text = '<b>All Cluster Averages</b><br><sub>Select a player to compare</sub>'
     fig_radar_interactive.update_layout(
