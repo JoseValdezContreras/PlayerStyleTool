@@ -4,7 +4,6 @@ Created on Fri Feb  6 21:08:27 2026
 
 @author: josev
 """
-
 import streamlit as st
 import pandas as pd
 import numpy as np
