@@ -471,10 +471,9 @@ with col_radar:
                 fillcolor=cluster_data['color'],
                 line=dict(color='#424242' , width=3),
                 opacity=0.5,
-                name=f'Cluster {cluster_num} ({cluster_data["size"]} players)' 
-
+                name=f'Cluster {cluster_num},
                 #hover
-                hover='fills'
+                hoveron='fills'
                 hovertemplate=f"<b>Cluster {cluster_num}</b><br>Value: %{{r:.2f}}<extra></extra>"
             ))
 
